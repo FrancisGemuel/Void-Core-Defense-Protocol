@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tower Defense</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <div id="game-container">
+        <canvas id="canvas"></canvas>
+
+        <div id="ui">
+            <div id="top-bar">
+                <span id="coins-display">💰 150</span>
+                <span id="wave-bar">Wave <span id="wave-num">0</span> / 20</span>
+                <span id="lives-display">❤️ 20</span>
+            </div>
+
+            <div id="instructions">Click path to place tower ↓</div>
+            <div id="msg"></div>
+        </div>
+
+        <div id="bottom-bar">
+            <span style="color:#aaa;font-size:11px;">Towers:</span>
+
+            <button class="tower-btn selected" data-type="sniper">
+                <span class="icon">🔫</span><span>Sniper</span><span class="cost">50g</span>
+            </button>
+
+            <button class="tower-btn" data-type="flamer">
+                <span class="icon">🔥</span><span>Flamer</span><span class="cost">80g</span>
+            </button>
+
+            <button class="tower-btn" data-type="tank">
+                <span class="icon">🤖</span><span>Mech</span><span class="cost">120g</span>
+            </button>
+
+            <button class="tower-btn" data-type="drone">
+                <span class="icon">🚁</span><span>Drone</span><span class="cost">100g</span>
+            </button>
+
+            <div style="margin-left:auto;display:flex;gap:6px;">
+                <button class="tower-btn" id="start-btn">▶ Start</button>
+                <button class="tower-btn" id="reset-btn">↺ Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
