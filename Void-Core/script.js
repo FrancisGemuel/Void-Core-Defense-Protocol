@@ -55,7 +55,7 @@ function spawnEnemy(waveNum) {
         hp, maxHp: hp, spd,
         type: t,
         reward: 8 + waveNum * 2,
-        size: t === 'dino' ? 14 : 10,
+        size: t === 'dino' ? 18 : t === 'blob' ? 14 : 12,
         color: t === 'dino' ? '#9b59b6' : t === 'blob' ? '#e67e22' : '#c0392b',
     });
 }
@@ -179,41 +179,45 @@ function drawBase() {
 }
 
 function drawEnemy(en) {
+    const img = enemyImages[en.type];
+
+    // breathing effect
+    const pulse = Math.sin(Date.now() * 0.005) * 2;
+    const size = en.size * 2 + pulse;
+
+    // movement direction rotation
+    const angle = Math.atan2(en.vy || 0, en.vx || 1);
+
     ctx.save();
-    const s = en.size;
-    if (en.type === 'dino') {
-        ctx.fillStyle = '#9b59b6';
-        ctx.beginPath();
-        ctx.ellipse(en.x, en.y, s, s * 0.75, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#7d3c98';
-        ctx.beginPath();
-        ctx.moveTo(en.x, en.y - s * 0.75);
-        ctx.lineTo(en.x - 4, en.y - s * 0.75 - 6);
-        ctx.lineTo(en.x + 4, en.y - s * 0.75 - 6);
-        ctx.fill();
-    } else if (en.type === 'blob') {
-        ctx.fillStyle = '#e67e22';
-        ctx.beginPath();
-        ctx.arc(en.x, en.y, s, 0, Math.PI * 2);
-        ctx.fill();
+
+    // move origin to enemy position
+    ctx.translate(en.x, en.y);
+    ctx.rotate(angle);
+
+    // draw enemy
+    if (img && img.complete) {
+        ctx.drawImage(img, -size / 2, -size / 2, size, size);
     } else {
-        ctx.fillStyle = '#c0392b';
+        ctx.fillStyle = en.color;
         ctx.beginPath();
-        ctx.ellipse(en.x, en.y, s * 0.7, s, 0.3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#922b21';
-        ctx.beginPath();
-        ctx.ellipse(en.x, en.y - s * 0.6, s * 0.4, s * 0.4, 0, 0, Math.PI * 2);
+        ctx.arc(0, 0, en.size, 0, Math.PI * 2);
         ctx.fill();
     }
-    const barW = s * 2.2, barH = 3;
-    const bx = en.x - barW / 2, by = en.y - s - 7;
+
+    ctx.restore();
+
+    // 🔋 HP BAR (draw OUTSIDE rotation — important!)
+    const barW = en.size * 2.2;
+    const barH = 3;
+
+    const bx = en.x - barW / 2;
+    const by = en.y - en.size - 7;
+
     ctx.fillStyle = '#333';
     ctx.fillRect(bx, by, barW, barH);
+
     ctx.fillStyle = en.hp > en.maxHp * 0.5 ? '#2ecc71' : '#e74c3c';
     ctx.fillRect(bx, by, barW * (en.hp / en.maxHp), barH);
-    ctx.restore();
 }
 
 function drawTower(t) {
@@ -311,8 +315,11 @@ function update() {
                 if (lives <= 0) { gameOver = true; showMsg('💀 Game Over! Base destroyed!', 99999); return; }
             }
         } else {
-            en.x += (dx / dist) * en.spd;
-            en.y += (dy / dist) * en.spd;
+            en.vx = (dx / dist) * en.spd;
+            en.vy = (dy / dist) * en.spd;
+
+            en.x += en.vx;
+            en.y += en.vy;
         }
     }
 
@@ -384,6 +391,16 @@ function draw() {
         ctx.restore();
     }
 }
+
+const enemyImages = {
+    blob: new Image(),
+    dino: new Image(),
+    bug: new Image()
+};
+
+enemyImages.blob.src = "assets/sprite-sheets/blob.png";
+enemyImages.dino.src = "assets/sprite-sheets/dino.png";
+enemyImages.bug.src = "assets/sprite-sheets/bug.png";
 
 function loop() {
     update();
