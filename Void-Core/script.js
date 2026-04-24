@@ -221,19 +221,30 @@ function drawEnemy(en) {
 }
 
 function drawTower(t) {
+    const img = towerImages[t.type];
+
     ctx.save();
-    ctx.beginPath();
-    ctx.arc(t.x, t.y, t.size, 0, Math.PI * 2);
-    ctx.fillStyle = t.color + 'cc';
-    ctx.fill();
-    ctx.strokeStyle = t.color;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.font = `bold ${t.size}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(t.label, t.x, t.y);
+    ctx.translate(t.x, t.y);
+    ctx.rotate(t.angle || 0); // rotate toward enemy
+
+    //img size and recoil effect
+    const recoil = t.recoil || 0;
+
+    // push backward when shooting
+    ctx.translate(-recoil, 0);
+
+    const size = t.size * 2 + recoil;
+
+    if (img && img.complete) {
+        ctx.drawImage(img, -size / 2, -size / 2, size * 1.2, size * 1.2); //fix img scaling
+    } else {
+        // fallback (if image not loaded yet)
+        ctx.beginPath();
+        ctx.arc(0, 0, t.size, 0, Math.PI * 2);
+        ctx.fillStyle = t.color;
+        ctx.fill();
+    }
+
     ctx.restore();
 }
 
@@ -324,6 +335,7 @@ function update() {
     }
 
     for (let t of towers) {
+        t.recoil = Math.max(0, (t.recoil || 0) - 0.5); // before cooldown check for recoil
         t.cooldown = Math.max(0, t.cooldown - 1);
         if (t.cooldown > 0) continue;
         let best = null, bestDist = 9999;
@@ -333,6 +345,9 @@ function update() {
             if (d <= t.range && pathDist(en.wpIdx) < bestDist) { best = en; bestDist = pathDist(en.wpIdx); }
         }
         if (best) {
+            t.angle = Math.atan2(best.y - t.y, best.x - t.x); //rotation toward enemy
+            t.recoil = 6; // strength of recoil
+
             const pColor = t.type === 'flamer' ? '#ff6b35' : t.type === 'drone' ? '#1D9E75' : t.type === 'tank' ? '#7F77DD' : '#85B7EB';
             projectiles.push({ x: t.x, y: t.y, tx: best.x, ty: best.y, target: best, spd: 5, atk: t.atk, color: pColor, r: t.type === 'flamer' ? 4 : 3, splash: t.splash, splashR: 50 });
             t.cooldown = Math.round(60 / t.spd);
@@ -401,6 +416,18 @@ const enemyImages = {
 enemyImages.blob.src = "assets/sprite-sheets/blob.png";
 enemyImages.dino.src = "assets/sprite-sheets/dino.png";
 enemyImages.bug.src = "assets/sprite-sheets/bug.png";
+
+const towerImages = {
+    sniper: new Image(),
+    flamer: new Image(),
+    tank: new Image(),
+    drone: new Image()
+};
+
+towerImages.sniper.src = "assets/towers/sniper.png";
+towerImages.flamer.src = "assets/towers/flamer.png";
+towerImages.tank.src = "assets/towers/mech.png"; // assuming mech = tank
+towerImages.drone.src = "assets/towers/drone.png";
 
 function loop() {
     update();
