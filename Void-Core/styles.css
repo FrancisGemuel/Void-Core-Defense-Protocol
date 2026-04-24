@@ -99,6 +99,34 @@ body {
     font-size: 10px;
 }
 
+/* START button (green) */
+#start-btn {
+    background: rgba(40, 120, 40, 0.9);
+    /* dark green */
+    border: 1.5px solid #6cff6c;
+    /* light green border */
+}
+
+#start-btn:hover {
+    background: rgba(60, 160, 60, 0.95);
+    /* brighter green on hover */
+    border-color: #a8ffb0;
+}
+
+/* RESET button (red) */
+#reset-btn {
+    background: rgba(140, 40, 40, 0.9);
+    /* dark red */
+    border: 1.5px solid #ff6b6b;
+    /* light red border */
+}
+
+#reset-btn:hover {
+    background: rgba(180, 60, 60, 0.95);
+    /* brighter red on hover */
+    border-color: #ff9a9a;
+}
+
 #msg {
     position: absolute;
     top: 50%;
