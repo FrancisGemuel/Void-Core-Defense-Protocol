@@ -91,7 +91,10 @@ body {
 }
 
 .tower-btn .icon {
-    font-size: 18px;
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    image-rendering: auto;
 }
 
 .tower-btn .cost {
