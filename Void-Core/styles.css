@@ -65,6 +65,7 @@ body {
     flex-wrap: wrap;
 }
 
+/* towers */
 .tower-btn {
     background: rgba(40, 40, 80, 0.9);
     border: 1.5px solid #4a6fa5;
