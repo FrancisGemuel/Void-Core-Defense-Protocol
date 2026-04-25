@@ -197,6 +197,7 @@ function updateUI() {
     document.getElementById('lives-display').textContent = '❤️ ' + lives;
 }
 
+// BUILD UI
 function drawPath() {
     const wp = getWaypoints();
     ctx.save();
@@ -398,6 +399,7 @@ function drawFloatingTexts() {
     }
 }
 
+//add Effects
 function addParticles(x, y, color, n) {
     for (let i = 0; i < n; i++) {
         const a = Math.random() * Math.PI * 2;
