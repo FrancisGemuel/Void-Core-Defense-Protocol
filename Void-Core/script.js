@@ -407,7 +407,7 @@ function addParticles(x, y, color, n) {
         particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 2 + Math.random() * 2, color, life: 18, maxLife: 18 });
     }
 }
-
+//explode effects
 function addDeathEffect(x, y, color) {
     // BIG burst
     for (let i = 0; i < 25; i++) {
