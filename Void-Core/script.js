@@ -387,7 +387,7 @@ function drawBackground() {
         ctx.fill();
     }
 }
-
+//gold per kill
 function drawFloatingTexts() {
     for (let t of floatingTexts) {
         ctx.save();
