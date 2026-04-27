@@ -447,7 +447,7 @@ function addFloatingText(x, y, text) {
         life: 60
     });
 }
-
+//events effects updates
 function update() {
     if (gameOver || gameWon) return;
 
