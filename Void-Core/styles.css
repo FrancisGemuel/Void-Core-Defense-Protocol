@@ -33,6 +33,7 @@ body {
     pointer-events: none;
 }
 
+/* top bar */
 #top-bar {
     display: flex;
     justify-content: space-between;
