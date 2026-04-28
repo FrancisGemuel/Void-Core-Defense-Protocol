@@ -11,6 +11,7 @@ function resize() {
 window.addEventListener('load', () => {
     resize();
     generateDecor();
+    bgMusic.play().catch(() => { });
     loop();
 });
 
@@ -533,6 +534,7 @@ function update() {
         if (best) {
             t.angle = Math.atan2(best.y - t.y, best.x - t.x); //rotation toward enemy
             t.recoil = 6; // strength of recoil
+            playSound(shootSounds[t.type]);
 
             const pColor = t.type === 'flamer' ? '#ff6b35' : t.type === 'drone' ? '#1D9E75' : t.type === 'tank' ? '#7F77DD' : '#85B7EB';
             projectiles.push({ x: t.x, y: t.y, tx: best.x, ty: best.y, target: best, spd: 5, atk: t.atk, color: pColor, r: t.type === 'flamer' ? 4 : 3, splash: t.splash, splashR: 50 });
@@ -555,6 +557,7 @@ function update() {
                                 en.deathTimer = 12;
 
                                 addDeathEffect(en.x, en.y, en.color);
+                                playSound(explosionSound);
                                 coins += en.reward;
                                 addFloatingText(en.x, en.y, "+" + en.reward);
                                 updateUI();
@@ -569,6 +572,7 @@ function update() {
                         p.target.deathTimer = 12;
 
                         addDeathEffect(p.target.x, p.target.y, p.target.color);
+                        playSound(explosionSound);
                         coins += p.target.reward;
                         addFloatingText(p.target.x, p.target.y, "+" + p.target.reward);
                         updateUI();
@@ -643,6 +647,45 @@ decorImages.bush.src = "assets/decor/bush.png";
 const baseImg = new Image();
 baseImg.src = "assets/decor/base.png";
 
+/* ===============================
+    AUDIO SYSTEM
+================================= */
+
+// tower shoot sounds
+const shootSounds = {
+    sniper: new Audio("assets/sounds/sniper_projectile_sound.mp3"),
+    drone: new Audio("assets/sounds/sniper_projectile_sound.mp3"), // same as sniper
+    flamer: new Audio("assets/sounds/flame_projectile_sound.mp3"),
+    tank: new Audio("assets/sounds/mech_projectile_sound.mp3")
+};
+
+// explosion sound
+const explosionSound = new Audio("assets/sounds/explosion.mp3");
+
+// background music
+const bgMusic = new Audio("assets/sounds/bg_music.mp3");
+
+// settings
+bgMusic.loop = true;
+bgMusic.volume = 0.35;
+
+explosionSound.volume = 0.6;
+
+// preload + lower latency
+for (let key in shootSounds) {
+    shootSounds[key].volume = 0.5;
+    shootSounds[key].preload = "auto";
+}
+explosionSound.preload = "auto";
+bgMusic.preload = "auto";
+
+/* play sound helper */
+function playSound(audio) {
+    const s = audio.cloneNode(); // allows overlap
+    s.volume = audio.volume;
+    s.play().catch(() => { });
+}
+
 function loop() {
     update();
     draw();
@@ -655,6 +698,10 @@ document.querySelectorAll('.tower-btn[data-type]').forEach(btn => {
     });
 });
 
-document.getElementById('start-btn').addEventListener('click', startWave);
+// document.getElementById('start-btn').addEventListener('click', startWave);
+document.getElementById('start-btn').addEventListener('click', () => {
+    bgMusic.play().catch(() => { });
+    startWave();
+});
 document.getElementById('reset-btn').addEventListener('click', resetGame);
 
