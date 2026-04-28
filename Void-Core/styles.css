@@ -8,6 +8,7 @@ body {
     background: #1a1a2e;
 }
 
+/* canvas */
 #game-container {
     position: relative;
     width: 100%;
