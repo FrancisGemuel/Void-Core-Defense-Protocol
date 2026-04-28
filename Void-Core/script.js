@@ -612,7 +612,7 @@ function draw() {
         ctx.restore();
     }
 }
-//assets
+//assets -- next add music
 const enemyImages = {
     blob: new Image(),
     dino: new Image(),
@@ -651,7 +651,6 @@ function loop() {
     draw();
     animFrame = requestAnimationFrame(loop);
 }
-// loop();
 
 document.querySelectorAll('.tower-btn[data-type]').forEach(btn => {
     btn.addEventListener('click', () => {
