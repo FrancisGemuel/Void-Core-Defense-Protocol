@@ -612,7 +612,7 @@ function draw() {
         ctx.restore();
     }
 }
-
+//assets
 const enemyImages = {
     blob: new Image(),
     dino: new Image(),
