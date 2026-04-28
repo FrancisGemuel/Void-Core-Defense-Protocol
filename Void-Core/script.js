@@ -618,7 +618,6 @@ const enemyImages = {
     dino: new Image(),
     bug: new Image()
 };
-
 enemyImages.blob.src = "assets/sprite-sheets/blob.png";
 enemyImages.dino.src = "assets/sprite-sheets/dino.png";
 enemyImages.bug.src = "assets/sprite-sheets/bug.png";
@@ -629,7 +628,6 @@ const towerImages = {
     tank: new Image(),
     drone: new Image()
 };
-
 towerImages.sniper.src = "assets/towers/sniper.png";
 towerImages.flamer.src = "assets/towers/flamer.png";
 towerImages.tank.src = "assets/towers/mech.png"; // assuming mech = tank
@@ -639,7 +637,6 @@ const decorImages = {
     tree: new Image(),
     bush: new Image()
 };
-
 decorImages.tree.src = "assets/decor/tree.png";
 decorImages.bush.src = "assets/decor/bush.png";
 
