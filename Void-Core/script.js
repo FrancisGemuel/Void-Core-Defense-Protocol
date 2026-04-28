@@ -343,7 +343,7 @@ function drawTower(t) {
 
     ctx.restore();
 }
-
+//bullets
 function drawProjectile(p) {
     ctx.save();
     ctx.beginPath();
