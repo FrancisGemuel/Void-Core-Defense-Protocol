@@ -81,8 +81,7 @@ function generateDecor() {
         });
     }
 }
-
-
+//create enemy
 function spawnEnemy(waveNum) {
     const wp = getWaypoints();
     const types = ['bug', 'dino', 'blob'];
@@ -113,7 +112,7 @@ function spawnEnemy(waveNum) {
         color: t === 'dino' ? '#9b59b6' : t === 'blob' ? '#e67e22' : '#c0392b',
     });
 }
-
+//start
 function startWave() {
     if (waveActive || gameOver || gameWon) return;
     if (wave >= maxWaves) return;
@@ -126,7 +125,7 @@ function startWave() {
     waveActive = true;
     document.getElementById('start-btn').style.opacity = '0.4';
 }
-
+//reset
 function resetGame() {
     coins = 150; lives = 20; wave = 0;
     towers = []; enemies = []; projectiles = []; particles = [];
