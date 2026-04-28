@@ -29,7 +29,7 @@ let selectedType = 'sniper';
 let waveActive = false, gameOver = false, gameWon = false;
 let animFrame;
 let waveTimer = 0, spawnCount = 0, spawnMax = 0, spawnInterval = 0, spawnTimer = 0;
-
+//tower properties
 const TOWER_DEFS = {
     sniper: { cost: 50, atk: 25, spd: 1.2, range: 130, color: '#378ADD', size: 14, label: 'S' },
     flamer: { cost: 80, atk: 15, spd: 2.5, range: 80, color: '#E24B4A', size: 14, label: 'F', splash: true },
