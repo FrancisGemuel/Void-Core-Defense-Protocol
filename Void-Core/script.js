@@ -592,7 +592,7 @@ function update() {
     projectiles = projectiles.filter(p => !p.dead);
     particles = particles.filter(p => p.life > 0);
 }
-
+//init
 function draw() {
     drawBackground();
     drawDecor();
