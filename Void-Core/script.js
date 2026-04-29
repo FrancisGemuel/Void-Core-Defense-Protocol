@@ -520,7 +520,7 @@ function update() {
             en.y += en.vy * gameSpeed;
         }
     }
-
+    //up towers
     for (let t of towers) {
         t.recoil = Math.max(0, (t.recoil || 0) - 0.5); // before cooldown check for recoil
         t.cooldown = Math.max(0, t.cooldown - 1);
