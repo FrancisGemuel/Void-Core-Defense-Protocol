@@ -438,7 +438,7 @@ function addDeathEffect(x, y, color) {
         ring: true
     });
 }
-
+//coins
 function addFloatingText(x, y, text) {
     floatingTexts.push({
         x,
