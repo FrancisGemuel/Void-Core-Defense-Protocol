@@ -374,7 +374,7 @@ function drawParticle(p) {
 
     ctx.restore();
 }
-
+//bg
 function drawBackground() {
     ctx.fillStyle = '#5c3a1e';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
