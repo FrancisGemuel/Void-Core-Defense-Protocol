@@ -161,3 +161,84 @@ body {
     line-height: 1.6;
     pointer-events: none;
 }
+
+/* audio */
+#settings-btn {
+    background: rgba(40, 40, 80, 0.9);
+    border: 1.5px solid #4a6fa5;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+    flex-shrink: 0;
+}
+
+#settings-btn:hover {
+    background: rgba(60, 60, 120, 0.9);
+    border-color: #7aabf0;
+}
+
+#settings-panel {
+    display: none;
+    position: absolute;
+    top: 46px;
+    /* just below the top bar */
+    right: 10px;
+    width: 220px;
+    background: rgba(15, 15, 35, 0.97);
+    border: 1.5px solid #4a6fa5;
+    border-radius: 10px;
+    padding: 14px 16px;
+    z-index: 100;
+    pointer-events: all;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#settings-panel.hidden {
+    display: none !important;
+}
+
+.settings-title {
+    color: #ffd700;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 6px;
+}
+
+#settings-panel label {
+    color: #aaa;
+    font-size: 11px;
+    margin-bottom: -4px;
+}
+
+#settings-panel input[type="range"] {
+    width: 100%;
+    accent-color: #4a6fa5;
+    cursor: pointer;
+}
+
+#mute-btn {
+    margin-top: 4px;
+    background: rgba(140, 40, 40, 0.85);
+    border: 1.5px solid #ff6b6b;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 12px;
+    padding: 6px 10px;
+    cursor: pointer;
+    text-align: center;
+}
+
+#mute-btn:hover {
+    background: rgba(180, 60, 60, 0.95);
+}
