@@ -683,6 +683,7 @@ bgMusic.preload = "auto";
 function playSound(audio) {
     const s = audio.cloneNode(); // allows overlap
     s.volume = audio.volume;
+    s.muted = muted;
     s.play().catch(() => { });
 }
 
@@ -704,4 +705,73 @@ document.getElementById('start-btn').addEventListener('click', () => {
     startWave();
 });
 document.getElementById('reset-btn').addEventListener('click', resetGame);
+
+//audio settings
+const settingsBtn = document.getElementById('settings-btn');
+const settingsPanel = document.getElementById('settings-panel');
+
+// sliders / controls 
+const musicSlider = document.getElementById('music-slider');
+const sfxSlider = document.getElementById('sfx-slider');
+const muteBtn = document.getElementById('mute-btn');
+
+// Start closed
+settingsPanel.classList.add('hidden');
+
+// Toggle panel only when button clicked
+settingsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    settingsPanel.classList.toggle('hidden');
+});
+
+// Close if clicked outside
+document.addEventListener('click', (e) => {
+    if (
+        !settingsPanel.contains(e.target) &&
+        e.target !== settingsBtn
+    ) {
+        settingsPanel.classList.add('hidden');
+    }
+});
+
+// Prevent inside click from closing
+settingsPanel.addEventListener('click', (e) => {
+    e.stopPropagation();
+});
+
+// ===============================
+// FUNCTIONALITY
+// ===============================
+
+// Music Volume
+musicSlider.addEventListener('input', () => {
+    bgMusic.volume = musicSlider.value / 100;
+});
+
+// SFX Volume
+sfxSlider.addEventListener('input', () => {
+    const vol = sfxSlider.value / 100;
+
+    explosionSound.volume = vol;
+
+    for (let key in shootSounds) {
+        shootSounds[key].volume = vol;
+    }
+});
+
+// Mute Toggle
+let muted = false;
+
+muteBtn.addEventListener('click', () => {
+    muted = !muted;
+
+    bgMusic.muted = muted;
+    explosionSound.muted = muted;
+
+    for (let key in shootSounds) {
+        shootSounds[key].muted = muted;
+    }
+
+    muteBtn.textContent = muted ? "🔊 Unmute All" : "🔇 Mute All";
+});
 
