@@ -761,7 +761,7 @@ sfxSlider.addEventListener('input', () => {
 
 // Mute Toggle
 let muted = false;
-
+//
 muteBtn.addEventListener('click', () => {
     muted = !muted;
 
