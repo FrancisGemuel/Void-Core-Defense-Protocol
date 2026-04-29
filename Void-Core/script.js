@@ -541,7 +541,7 @@ function update() {
             t.cooldown = Math.round(60 / t.spd);
         }
     }
-
+    //up projectiles
     for (let p of projectiles) {
         const dx = p.target.x - p.x, dy = p.target.y - p.y;
         const dist = Math.hypot(dx, dy);
