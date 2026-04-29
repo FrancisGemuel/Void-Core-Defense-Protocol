@@ -477,7 +477,7 @@ function update() {
     }
 
     floatingTexts = floatingTexts.filter(t => t.life > 0);
-
+    //up points
     const wp = getWaypoints();
     for (let en of enemies) {
         if (en.dying) {
