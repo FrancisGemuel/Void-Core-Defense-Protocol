@@ -1067,10 +1067,6 @@ settingsPanel.addEventListener('click', (e) => {
     e.stopPropagation();
 });
 
-// ===============================
-// FUNCTIONALITY
-// ===============================
-
 // Music Volume
 musicSlider.addEventListener('input', () => {
     bgMusic.volume = musicSlider.value / 100;
@@ -1103,6 +1099,7 @@ muteBtn.addEventListener('click', () => {
     muteBtn.textContent = muted ? "🔊 Unmute All" : "🔇 Mute All";
 });
 
+//hero
 function heroAOE() {
     for (let en of enemies) {
         if (!en.dead && Math.hypot(en.x - hero.x, en.y - hero.y) < 80) {
