@@ -21,6 +21,7 @@ const PATH_WAYPOINTS_RATIO = [
     [0.75, 0.65], [0.9, 0.65], [1.0, 0.65]
 ];
 
+let hoveredEnemy = null;
 let decorations = [];
 let coins = 150, lives = 20, wave = 0, maxWaves = 20;
 let gameSpeed = 1;
@@ -36,6 +37,28 @@ const TOWER_DEFS = {
     flamer: { cost: 80, atk: 15, spd: 2.5, range: 80, color: '#E24B4A', size: 14, label: 'F', splash: true },
     tank: { cost: 120, atk: 60, spd: 0.6, range: 110, color: '#7F77DD', size: 16, label: 'T' },
     drone: { cost: 100, atk: 35, spd: 1.5, range: 150, color: '#1D9E75', size: 13, label: 'D' },
+};
+//Hero
+let hero = {
+    x: 100,
+    y: 100,
+    size: 14,
+    speed: 2.5,
+    targetX: null,
+    targetY: null,
+    targetEnemy: null,
+    atk: 20,
+    range: 120,
+    recoil: 0,
+    cooldown: 0,
+    angle: 0,
+    hp: 200,
+    maxHp: 200,
+
+    dead: false,
+    respawnTimer: 0,
+    hitCooldown: 0 // prevents instant melt
+
 };
 
 function getWaypoints() {
@@ -128,11 +151,49 @@ function startWave() {
 }
 //reset
 function resetGame() {
-    coins = 150; lives = 20; wave = 0;
-    towers = []; enemies = []; projectiles = []; particles = [];
-    waveActive = false; gameOver = false; gameWon = false;
-    spawnCount = 0;
 
+    // =========================
+    // GAME STATE
+    // =========================
+    coins = 150;
+    lives = 20;
+    wave = 0;
+    waveActive = false;
+    gameOver = false;
+    gameWon = false;
+
+    spawnCount = 0;
+    spawnMax = 0;
+    spawnTimer = 0;
+
+    // =========================
+    // OBJECTS
+    // =========================
+    towers = [];
+    enemies = [];
+    projectiles = [];
+    particles = [];
+    floatingTexts = [];
+
+    // =========================
+    // HERO RESET (IMPORTANT FIX)
+    // =========================
+    hero.x = 100;
+    hero.y = 100;
+    hero.hp = hero.maxHp;
+    hero.dead = false;
+    hero.respawnTimer = 0;
+    hero.targetEnemy = null;
+    hero.targetX = null;
+    hero.targetY = null;
+    hero.cooldown = 0;
+    hero.recoil = 0;
+    hero.hitCooldown = 0;
+    hero.angle = 0;
+
+    // =========================
+    // UI RESET
+    // =========================
     document.getElementById('msg').style.display = 'none';
     document.getElementById('start-btn').style.opacity = '1';
     document.getElementById('wave-num').textContent = '0';
@@ -147,35 +208,73 @@ function selectTower(type) {
 }
 window.selectTower = selectTower;
 window.startWave = startWave;
-window.resetGame = function () {
-    coins = 150; lives = 20; wave = 0; towers = []; enemies = []; projectiles = []; particles = [];
-    waveActive = false; gameOver = false; gameWon = false;
-    spawnCount = 0;
-    document.getElementById('msg').style.display = 'none';
-    document.getElementById('start-btn').style.opacity = '1';
-    document.getElementById('wave-num').textContent = '0';
-    updateUI();
-};
 
 canvas.addEventListener('click', (e) => {
     if (gameOver || gameWon) return;
+
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
-    const def = TOWER_DEFS[selectedType];
-    if (coins < def.cost) { showMsg('Not enough gold!', 900); return; }
-    for (const t of towers) {
-        if (Math.hypot(t.x - mx, t.y - my) < 22) { showMsg('Too close!', 800); return; }
+
+    // =========================
+    // 🏹 HERO CONTROL (default)
+    // =========================
+    if (!e.shiftKey) {
+
+        // check if clicked enemy → ATTACK
+        for (let en of enemies) {
+            if (!en.dead && Math.hypot(en.x - mx, en.y - my) < en.size) {
+                hero.targetEnemy = en;
+                hero.targetX = null;
+                hero.targetY = null;
+                return;
+            }
+        }
+
+        // otherwise MOVE
+        hero.targetEnemy = null;
+        hero.targetX = mx;
+        hero.targetY = my;
+        return;
     }
+
+    // =========================
+    // 🏗️ TOWER PLACEMENT (SHIFT + CLICK)
+    // =========================
+    const def = TOWER_DEFS[selectedType];
+
+    if (coins < def.cost) { showMsg('Not enough gold!', 900); return; }
+
+    for (const t of towers) {
+        if (Math.hypot(t.x - mx, t.y - my) < 22) {
+            showMsg('Too close!', 800);
+            return;
+        }
+    }
+
     const wp = getWaypoints();
     for (let i = 0; i < wp.length - 1; i++) {
         if (distToSegment(mx, my, wp[i].x, wp[i].y, wp[i + 1].x, wp[i + 1].y) < 28) {
-            showMsg('Too close to path!', 900); return;
+            showMsg('Too close to path!', 900);
+            return;
         }
     }
+
     coins -= def.cost;
     towers.push({ x: mx, y: my, type: selectedType, cooldown: 0, ...def });
     updateUI();
+});
+
+canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    hero.targetEnemy = null;
+    hero.targetX = mx;
+    hero.targetY = my;
 });
 
 function distToSegment(px, py, ax, ay, bx, by) {
@@ -346,6 +445,13 @@ function drawTower(t) {
 //bullets
 function drawProjectile(p) {
     ctx.save();
+    //laser effect
+    // ctx.fillStyle = p.color;
+    // ctx.fillRect(p.x - 2, p.y - 2, 6, 2);
+
+    //glow effect
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.r || 3, 0, Math.PI * 2);
     ctx.fillStyle = p.color;
@@ -395,6 +501,63 @@ function drawFloatingTexts() {
         ctx.fillStyle = '#fff';
         ctx.font = '14px Arial';
         ctx.fillText(t.text, t.x, t.y);
+        ctx.restore();
+    }
+}
+//draw hero
+function drawHero(h) {
+    if (h.dead) return;
+    // 🟤 SHADOW
+    ctx.save();
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(h.x + 3, h.y + 4, h.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 🎯 HERO BODY
+    ctx.save();
+    ctx.translate(h.x, h.y);
+    ctx.rotate(h.angle || 0);
+
+    const recoil = h.recoil || 0;
+
+    // slight push back when attacking
+    ctx.translate(-recoil, 0);
+
+    if (heroImg.complete) {
+        ctx.drawImage(heroImg, -20, -20, 40, 40);
+    } else {
+        ctx.fillStyle = '#00ffff';
+        ctx.beginPath();
+        ctx.arc(0, 0, h.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    ctx.restore();
+
+    // 🔋 HP BAR
+    const barW = 30;
+    const barH = 4;
+
+    ctx.fillStyle = '#333';
+    ctx.fillRect(h.x - barW / 2, h.y - 25, barW, barH);
+
+    ctx.fillStyle = '#2ecc71';
+    ctx.fillRect(h.x - barW / 2, h.y - 25, barW * (h.hp / h.maxHp), barH);
+
+    //Show respawn timer
+    if (h.dead) {
+        ctx.save();
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(
+            "Respawn: " + Math.ceil(h.respawnTimer / 60),
+            h.x,
+            h.y - 35
+        );
         ctx.restore();
     }
 }
@@ -451,6 +614,95 @@ function addFloatingText(x, y, text) {
 function update() {
     if (gameOver || gameWon) return;
 
+    // HERO UPDATE
+    if (hero) {
+
+        // if (hero.dead) return;
+        // Movement
+        hero.hitCooldown = Math.max(0, hero.hitCooldown - 1);
+        hero.recoil = Math.max(0, (hero.recoil || 0) - 0.4);
+        if (hero.targetX !== null && hero.targetY !== null) {
+            const dx = hero.targetX - hero.x;
+            const dy = hero.targetY - hero.y;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist > 2) {
+                hero.x += (dx / dist) * hero.speed;
+                hero.y += (dy / dist) * hero.speed;
+                hero.angle = Math.atan2(dy, dx);
+            }
+        }
+
+        // Attack enemy
+        if (hero.targetEnemy && !hero.targetEnemy.dead) {
+            const dx = hero.targetEnemy.x - hero.x;
+            const dy = hero.targetEnemy.y - hero.y;
+            const dist = Math.hypot(dx, dy);
+
+            hero.angle = Math.atan2(dy, dx);
+
+            if (dist > hero.range) {
+                // Move closer
+                hero.x += (dx / dist) * hero.speed;
+                hero.y += (dy / dist) * hero.speed;
+            } else {
+                // Attack
+                hero.cooldown = Math.max(0, hero.cooldown - 1);
+
+                if (hero.cooldown === 0) {
+
+                    hero.recoil = 6; // 🔥 kickback
+
+                    // 🔫 SHOOT PROJECTILE
+                    projectiles.push({
+                        x: hero.x,
+                        y: hero.y,
+                        target: hero.targetEnemy,
+                        spd: 6,
+                        atk: hero.atk,
+                        color: '#00ffff',
+                        r: 4,
+                        fromHero: true // ⭐ mark as hero bullet
+                    });
+
+                    // 💥 muzzle effect
+                    addParticles(hero.x, hero.y, '#00ffff', 5);
+
+                    hero.cooldown = 25;
+                }
+            }
+        }
+        if (hero.hp <= 0 && !hero.dead) {
+            hero.dead = true;
+            hero.respawnTimer = 600; // 10 seconds
+
+            addDeathEffect(hero.x, hero.y, '#00ffff');
+        }
+        if (hero.dead) {
+
+            hero.respawnTimer--;
+
+            // show countdown only
+            if (hero.respawnTimer <= 0) {
+
+                hero.dead = false;
+                hero.hp = hero.maxHp;
+
+                // respawn position (TOP / SAFE ZONE)
+                hero.x = canvas.width * 0.1;
+                hero.y = canvas.height * 0.1;
+
+                hero.targetEnemy = null;
+                hero.targetX = null;
+                hero.targetY = null;
+
+                addParticles(hero.x, hero.y, '#00ffff', 20);
+            }
+
+            //return; // ❗ stop ALL actions while dead
+        }
+    }
+
     if (waveActive) {
         spawnTimer++;
         if (spawnCount < spawnMax && spawnTimer >= spawnInterval) {
@@ -480,6 +732,21 @@ function update() {
     //up points
     const wp = getWaypoints();
     for (let en of enemies) {
+        // 💥 HERO DAMAGE ON TOUCH
+        if (!hero.dead) {
+            const d = Math.hypot(en.x - hero.x, en.y - hero.y);
+
+            if (d < en.size + hero.size) {
+
+                if (hero.hitCooldown <= 0) {
+
+                    hero.hp -= 10;
+                    hero.hitCooldown = 20;
+
+                    addParticles(hero.x, hero.y, '#ff4d4d', 10);
+                }
+            }
+        }
         if (en.dying) {
             en.deathTimer--;
 
@@ -543,6 +810,10 @@ function update() {
     }
     //up projectiles
     for (let p of projectiles) {
+        if (!p.target || p.target.dead) {
+            p.dead = true;
+            continue;
+        }
         const dx = p.target.x - p.x, dy = p.target.y - p.y;
         const dist = Math.hypot(dx, dy);
         if (dist < p.spd || p.target.dead) {
@@ -566,6 +837,20 @@ function update() {
                     }
                 } else {
                     p.target.hp -= p.atk;
+                    if (p.fromHero) { // 🔥 HERO HIT EFFECT 
+                        addParticles(p.target.x, p.target.y, '#00ffff', 12);
+
+                        particles.push({
+                            x: p.target.x,
+                            y: p.target.y,
+                            r: 5,
+                            grow: 4,
+                            color: '#00ffff',
+                            life: 15,
+                            maxLife: 15,
+                            ring: true
+                        });
+                    }
                     if (p.target.hp <= 0 && !p.target.dead) {
                         p.target.dead = true;
                         p.target.dying = true;
@@ -601,6 +886,7 @@ function draw() {
     drawBackground();
     drawDecor();
     drawPath();
+    drawHero(hero);
     drawBase();
     drawFloatingTexts();
     for (const t of towers) drawTower(t);
@@ -613,6 +899,24 @@ function draw() {
         ctx.font = '12px sans-serif';
         ctx.textAlign = 'right';
         ctx.fillText(wave === 0 ? 'Place towers, then press ▶ Start' : `Wave ${wave} done! Press ▶ Start for next`, canvas.width - 10, canvas.height - 50);
+        ctx.restore();
+    }
+    if (hero.dead) {
+        ctx.save();
+
+        // ✨ blinking effect (ADD THIS LINE HERE)
+        ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.01) * 0.5;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+
+        ctx.fillText(
+            "RESPAWNING IN: " + Math.ceil(hero.respawnTimer / 60) + "s",
+            canvas.width / 2,
+            30
+        );
+
         ctx.restore();
     }
 }
@@ -646,6 +950,9 @@ decorImages.bush.src = "assets/decor/bush.png";
 
 const baseImg = new Image();
 baseImg.src = "assets/decor/base.png";
+
+const heroImg = new Image();
+heroImg.src = "assets/sprite-sheets/botcha.png";
 
 /* ===============================
     AUDIO SYSTEM
@@ -733,6 +1040,27 @@ document.addEventListener('click', (e) => {
         settingsPanel.classList.add('hidden');
     }
 });
+//hover enemy
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    hoveredEnemy = null;
+
+    for (let en of enemies) {
+        if (!en.dead && Math.hypot(en.x - mx, en.y - my) < en.size) {
+            hoveredEnemy = en;
+            break;
+        }
+    }
+
+    // change cursor to crosshair
+    canvas.style.cursor = hoveredEnemy ? 'crosshair' : 'default';
+
+    //for better UX 
+    //canvas.style.cursor = hoveredEnemy ? 'url("assets/cursor-attack/target.png"), auto' : 'default';
+});
 
 // Prevent inside click from closing
 settingsPanel.addEventListener('click', (e) => {
@@ -761,7 +1089,7 @@ sfxSlider.addEventListener('input', () => {
 
 // Mute Toggle
 let muted = false;
-//
+//git push origin main
 muteBtn.addEventListener('click', () => {
     muted = !muted;
 
@@ -775,3 +1103,17 @@ muteBtn.addEventListener('click', () => {
     muteBtn.textContent = muted ? "🔊 Unmute All" : "🔇 Mute All";
 });
 
+function heroAOE() {
+    for (let en of enemies) {
+        if (!en.dead && Math.hypot(en.x - hero.x, en.y - hero.y) < 80) {
+            en.hp -= 40;
+            addParticles(en.x, en.y, '#00ffff', 10);
+        }
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'q') {
+        heroAOE();
+    }
+});
