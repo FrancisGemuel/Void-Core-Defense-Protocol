@@ -994,6 +994,7 @@ function playSound(audio) {
     s.play().catch(() => { });
 }
 
+//loop
 function loop() {
     update();
     draw();
