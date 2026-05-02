@@ -14,7 +14,7 @@ window.addEventListener('load', () => {
     bgMusic.play().catch(() => { });
     loop();
 });
-
+//points per wave ratio
 const PATH_WAYPOINTS_RATIO = [
     [0, 0.35], [0.15, 0.35], [0.15, 0.2], [0.35, 0.2],
     [0.35, 0.55], [0.55, 0.55], [0.55, 0.25], [0.75, 0.25],
