@@ -975,7 +975,6 @@ const bgMusic = new Audio("assets/sounds/bg_music.mp3");
 // settings
 bgMusic.loop = true;
 bgMusic.volume = 0.35;
-
 explosionSound.volume = 0.6;
 
 // preload + lower latency
