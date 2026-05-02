@@ -1001,6 +1001,7 @@ function loop() {
     animFrame = requestAnimationFrame(loop);
 }
 
+//to organize
 document.querySelectorAll('.tower-btn[data-type]').forEach(btn => {
     btn.addEventListener('click', () => {
         selectTower(btn.dataset.type);
