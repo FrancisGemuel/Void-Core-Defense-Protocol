@@ -20,7 +20,7 @@ const PATH_WAYPOINTS_RATIO = [
     [0.35, 0.55], [0.55, 0.55], [0.55, 0.25], [0.75, 0.25],
     [0.75, 0.65], [0.9, 0.65], [1.0, 0.65]
 ];
-
+// objects
 let hoveredEnemy = null;
 let decorations = [];
 let coins = 150, lives = 20, wave = 0, maxWaves = 20;
