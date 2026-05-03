@@ -38,7 +38,7 @@ const TOWER_DEFS = {
     tank: { cost: 120, atk: 60, spd: 0.6, range: 110, color: '#7F77DD', size: 16, label: 'T' },
     drone: { cost: 100, atk: 35, spd: 1.5, range: 150, color: '#1D9E75', size: 13, label: 'D' },
 };
-//Hero
+//Hero properties
 let hero = {
     x: 100,
     y: 100,
