@@ -770,7 +770,7 @@ function update() {
             //return; // ❗ stop ALL actions while dead
         }
     }
-
+    //recalibrate active wave later
     if (waveActive) {
         spawnTimer++;
         if (spawnCount < spawnMax && spawnTimer >= spawnInterval) {
