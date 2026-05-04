@@ -678,10 +678,19 @@ function update() {
             hero.dead = true;
             hero.respawnTimer = 600; // 10 seconds
 
+            // ❤️ REMOVE 1 LIFE
+            lives--;
+            updateUI();
+
+            if (lives <= 0) {
+                gameOver = true;
+                showMsg('💀 Game Over! Base destroyed!', 99999);
+                return;
+            }
+
             addDeathEffect(hero.x, hero.y, '#00ffff');
         }
         if (hero.dead) {
-
             hero.respawnTimer--;
 
             // show countdown only
