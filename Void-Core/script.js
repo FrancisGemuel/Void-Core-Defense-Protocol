@@ -830,7 +830,7 @@ function update() {
 
         if (en.wpIdx >= wp.length - 1) continue;
 
-        // ADD THIS RIGHT BEFORE IT:
+        // flyer movement
         if (en.flying) {
             const baseX = canvas.width * 0.93;
             const baseY = canvas.height * 0.65;
