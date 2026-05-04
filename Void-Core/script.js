@@ -996,7 +996,7 @@ function update() {
                         }
 
                     } else {
-                        // 💨 MISS EFFECT
+                        // 💨 MISS EFFECT // add text 'miss' later
                         addParticles(p.x, p.y, '#ffffff', 3);
                     }
                     if (p.target.hp <= 0 && !p.target.dead) {
