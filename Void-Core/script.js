@@ -653,6 +653,8 @@ function update() {
 
                     hero.recoil = 6; // 🔥 kickback
 
+                    playSound(shootSounds.tank); //  shoot sound (mech sound)
+
                     // 🔫 SHOOT PROJECTILE
                     projectiles.push({
                         x: hero.x,
