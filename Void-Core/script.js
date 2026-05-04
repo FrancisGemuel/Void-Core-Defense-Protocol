@@ -954,7 +954,7 @@ const baseImg = new Image();
 baseImg.src = "assets/decor/base.png";
 
 const heroImg = new Image();
-heroImg.src = "assets/sprite-sheets/botcha.png";
+heroImg.src = "assets/sprite-sheets/shooter.png";
 
 /* ===============================
     AUDIO SYSTEM
