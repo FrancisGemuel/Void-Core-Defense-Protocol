@@ -108,7 +108,7 @@ function generateDecor() {
 //create enemy
 function spawnEnemy(waveNum) {
     const wp = getWaypoints();
-    const types = ['bug', 'dino', 'blob'];
+    const types = ['bug', 'dino', 'blob', 'flyer']; //new update flyer
     const t = types[Math.floor(Math.random() * types.length)];
     let hp = 40 + waveNum * 18;
 
@@ -126,14 +126,34 @@ function spawnEnemy(waveNum) {
         spd *= 1.1; // slightly faster than normal
         hp *= 1.2;
     }
+    else if (t === 'flyer') {
+        spd *= 1.8;       // fast
+        hp *= 0.6;        // fragile
+    }
     enemies.push({
-        x: wp[0].x, y: wp[0].y,
-        wpIdx: 0, progress: 0,
-        hp, maxHp: hp, spd,
+        x: wp[0].x,
+        y: wp[0].y,
+        wpIdx: 0,
+        progress: 0,
+
+        hp,
+        maxHp: hp,
+        spd,
         type: t,
-        reward: 8 + waveNum * 2,
-        size: t === 'dino' ? 18 : t === 'blob' ? 14 : 12,
-        color: t === 'dino' ? '#9b59b6' : t === 'blob' ? '#e67e22' : '#c0392b',
+        flying: t === 'flyer', // ⭐ IMPORTANT
+
+        // ⭐ wave motion data
+        waveOffset: Math.random() * Math.PI * 2,
+
+        reward: 10 + waveNum * 2,
+
+        size: t === 'flyer' ? 12 :
+            t === 'dino' ? 18 :
+                t === 'blob' ? 14 : 12,
+
+        color: t === 'flyer' ? '#58d3ff' :
+            t === 'dino' ? '#9b59b6' :
+                t === 'blob' ? '#e67e22' : '#c0392b',
     });
 }
 //start
@@ -378,15 +398,35 @@ function drawEnemy(en) {
     // movement direction rotation
     const angle = Math.atan2(en.vy || 0, en.vx || 1);
 
+    // 🌫 SHADOW (only for flying)
+    if (en.flying) {
+        ctx.save();
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = '#000';
+
+        const shadowSize = en.size * 0.8;
+
+        ctx.beginPath();
+        ctx.arc(en.x + 6, en.y + 10, shadowSize, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
     ctx.save();
 
+    // 🎯 ALTITUDE (floating effect)
+    const altitude = en.flying
+        ? Math.sin(Date.now() * 0.003 + (en.waveOffset || 0)) * 6
+        : 0;
     // move origin to enemy position
-    ctx.translate(en.x, en.y);
+    ctx.translate(en.x, en.y - altitude);
     ctx.rotate(angle);
 
     if (en.dying) {
         ctx.globalAlpha = en.alpha ?? 1;
     }
+
 
     // draw enemy
     if (img && img.complete) {
@@ -674,6 +714,23 @@ function update() {
                 }
             }
         }
+        // AUTO TARGET (only if player didn't choose one)
+        if (!hero.targetEnemy || hero.targetEnemy.dead) {
+            let best = null;
+            let bestDist = hero.range;
+
+            for (let en of enemies) {
+                if (en.dead) continue;
+
+                const d = Math.hypot(en.x - hero.x, en.y - hero.y);
+                if (d < bestDist) {
+                    bestDist = d;
+                    best = en;
+                }
+            }
+
+            hero.targetEnemy = best;
+        }
         if (hero.hp <= 0 && !hero.dead) {
             hero.dead = true;
             hero.respawnTimer = 600; // 10 seconds
@@ -773,6 +830,44 @@ function update() {
 
         if (en.wpIdx >= wp.length - 1) continue;
 
+        // ADD THIS RIGHT BEFORE IT:
+        if (en.flying) {
+            const baseX = canvas.width * 0.93;
+            const baseY = canvas.height * 0.65;
+            const dx = baseX - en.x;
+            const dy = baseY - en.y;
+            const dist = Math.hypot(dx, dy);
+            // dash timer
+            if (!en.dashTimer) {
+                en.dashTimer = 0;
+                en.dashCooldown = Math.floor(Math.random() * 180 + 120); // first dash in 2–5s
+            }
+
+            en.dashTimer--;
+            en.dashCooldown--;
+
+            if (en.dashCooldown <= 0) {
+                en.dashTimer = 40;           // dash lasts ~0.7s
+                en.dashCooldown = Math.floor(Math.random() * 180 + 120); // next dash cooldown
+            }
+
+            const dashMultiplier = en.dashTimer > 0 ? 2.2 : 1;
+
+            en.vx = (dx / dist) * en.spd * dashMultiplier;
+            en.vy = (dy / dist) * en.spd * dashMultiplier;
+            const waveMotion = Math.sin(Date.now() * 0.005 + en.waveOffset) * 1.5;
+            const px = -en.vy, py = en.vx;
+            en.x += en.vx * gameSpeed + px * waveMotion;
+            en.y += en.vy * gameSpeed + py * waveMotion;
+            if (dist < 10) {
+                en.dead = true;
+                lives--;
+                updateUI();
+                if (lives <= 0) { gameOver = true; showMsg('💀 Game Over! Base destroyed!', 99999); }
+            }
+            continue;
+        }
+
         const target = wp[en.wpIdx + 1];
         const dx = target.x - en.x, dy = target.y - en.y;
         const dist = Math.hypot(dx, dy);
@@ -806,8 +901,18 @@ function update() {
         let best = null, bestDist = 9999;
         for (let en of enemies) {
             if (en.dead) continue;
+            if (t.type === 'tank' && en.flying) continue;
             const d = Math.hypot(en.x - t.x, en.y - t.y);
-            if (d <= t.range && pathDist(en.wpIdx) < bestDist) { best = en; bestDist = pathDist(en.wpIdx); }
+            if (d <= t.range) {
+                const score = en.flying
+                    ? d // flyers: prioritize distance (closest threat)
+                    : pathDist(en.wpIdx); // ground: path progress
+
+                if (score < bestDist) {
+                    best = en;
+                    bestDist = score;
+                }
+            }
         }
         if (best) {
             t.angle = Math.atan2(best.y - t.y, best.x - t.x); //rotation toward enemy
@@ -815,7 +920,7 @@ function update() {
             playSound(shootSounds[t.type]);
 
             const pColor = t.type === 'flamer' ? '#ff6b35' : t.type === 'drone' ? '#1D9E75' : t.type === 'tank' ? '#7F77DD' : '#85B7EB';
-            projectiles.push({ x: t.x, y: t.y, tx: best.x, ty: best.y, target: best, spd: 5, atk: t.atk, color: pColor, r: t.type === 'flamer' ? 4 : 3, splash: t.splash, splashR: 50 });
+            projectiles.push({ x: t.x, y: t.y, tx: best.x, ty: best.y, target: best, spd: 5, atk: t.atk, color: pColor, r: t.type === 'flamer' ? 4 : 3, splash: t.splash, splashR: 50, fromTowerType: t.type });
             t.cooldown = Math.round(60 / t.spd);
         }
     }
@@ -831,7 +936,11 @@ function update() {
             if (!p.target.dead) {
                 if (p.splash) {
                     for (let en of enemies) {
-                        if (!en.dead && Math.hypot(en.x - p.target.x, en.y - p.target.y) < p.splashR) {
+                        if (
+                            !en.dead &&
+                            !en.flying && // ✈️ flyers immune to splash
+                            Math.hypot(en.x - p.target.x, en.y - p.target.y) < p.splashR
+                        ) {
                             en.hp -= p.atk * 0.6;
                             if (en.hp <= 0 && !en.dead) {
                                 en.dead = true;
@@ -847,20 +956,48 @@ function update() {
                         }
                     }
                 } else {
-                    p.target.hp -= p.atk;
-                    if (p.fromHero) { // 🔥 HERO HIT EFFECT 
-                        addParticles(p.target.x, p.target.y, '#00ffff', 12);
+                    // SNIPER vs FLYER MISS CHANCE
+                    let hit = true;
 
-                        particles.push({
-                            x: p.target.x,
-                            y: p.target.y,
-                            r: 5,
-                            grow: 4,
-                            color: '#00ffff',
-                            life: 15,
-                            maxLife: 15,
-                            ring: true
-                        });
+                    if (p.fromTowerType === 'sniper' && p.target.flying) {
+                        hit = Math.random() > 0.5;
+                    }
+
+                    if (hit) {
+                        p.target.hp -= p.atk;
+
+                        // 🔥 HERO HIT EFFECT (ONLY ON HIT)
+                        if (p.fromHero) {
+                            addParticles(p.target.x, p.target.y, '#00ffff', 12);
+
+                            particles.push({
+                                x: p.target.x,
+                                y: p.target.y,
+                                r: 5,
+                                grow: 4,
+                                color: '#00ffff',
+                                life: 15,
+                                maxLife: 15,
+                                ring: true
+                            });
+                        }
+
+                        // ☠️ DEATH CHECK (ONLY ON HIT)
+                        if (p.target.hp <= 0 && !p.target.dead) {
+                            p.target.dead = true;
+                            p.target.dying = true;
+                            p.target.deathTimer = 12;
+
+                            addDeathEffect(p.target.x, p.target.y, p.target.color);
+                            playSound(explosionSound);
+                            coins += p.target.reward;
+                            addFloatingText(p.target.x, p.target.y, "+" + p.target.reward);
+                            updateUI();
+                        }
+
+                    } else {
+                        // 💨 MISS EFFECT
+                        addParticles(p.x, p.y, '#ffffff', 3);
                     }
                     if (p.target.hp <= 0 && !p.target.dead) {
                         p.target.dead = true;
@@ -935,12 +1072,13 @@ function draw() {
 const enemyImages = {
     blob: new Image(),
     dino: new Image(),
-    bug: new Image()
+    bug: new Image(),
+    flyer: new Image()
 };
 enemyImages.blob.src = "assets/sprite-sheets/blob.png";
 enemyImages.dino.src = "assets/sprite-sheets/dino.png";
 enemyImages.bug.src = "assets/sprite-sheets/bug.png";
-
+enemyImages.flyer.src = "assets/sprite-sheets/flyer.png";
 const towerImages = {
     sniper: new Image(),
     flamer: new Image(),
