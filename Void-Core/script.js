@@ -956,7 +956,7 @@ function update() {
                         }
                     }
                 } else {
-                    // SNIPER vs FLYER MISS CHANCE
+                    // SNIPER vs FLYER MISS CHANCE // patch miss chance later
                     let hit = true;
 
                     if (p.fromTowerType === 'sniper' && p.target.flying) {
