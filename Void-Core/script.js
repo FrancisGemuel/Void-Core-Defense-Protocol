@@ -228,7 +228,7 @@ function selectTower(type) {
 }
 window.selectTower = selectTower;
 window.startWave = startWave;
-
+//REORGANIZE
 canvas.addEventListener('click', (e) => {
     if (gameOver || gameWon) return;
 
