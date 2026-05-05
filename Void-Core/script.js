@@ -220,7 +220,7 @@ function resetGame() {
 
     updateUI();
 }
-
+//SHIFT-CLICK FOR PLACING AFTER SELECT
 function selectTower(type) {
     selectedType = type;
     document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
