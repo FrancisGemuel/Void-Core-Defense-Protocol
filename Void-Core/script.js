@@ -1019,7 +1019,7 @@ function update() {
             p.y += (dy / dist) * p.spd;
         }
     }
-
+    //RECALIBRATE PARTICLES
     for (let p of particles) {
         p.x += p.vx; p.y += p.vy; p.life--;
         p.vx *= 0.9; p.vy *= 0.9;
