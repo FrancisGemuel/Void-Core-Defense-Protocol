@@ -1245,7 +1245,7 @@ muteBtn.addEventListener('click', () => {
     for (let key in shootSounds) {
         shootSounds[key].muted = muted;
     }
-
+    //Mute button text update
     muteBtn.textContent = muted ? "🔊 Unmute All" : "🔇 Mute All";
 });
 
