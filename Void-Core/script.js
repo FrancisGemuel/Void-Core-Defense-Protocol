@@ -211,7 +211,7 @@ const TOWER_DEFS = {
     sniper: { cost: 80, atk: 40, spd: 0.5, range: 230, color: '#378ADD', size: 14, label: 'S' },
     flamer: { cost: 120, atk: 30, spd: 2.5, range: 100, color: '#E24B4A', size: 14, label: 'F', splash: true },
     tank: { cost: 200, atk: 60, spd: 0.6, range: 110, color: '#7F77DD', size: 16, label: 'T', splash: true },
-    drone: { cost: 150, atk: 35, spd: 1.5, range: 180, color: '#1D9E75', size: 13, label: 'D' },
+    drone: { cost: 150, atk: 35, spd: 1.5, range: 250, color: '#1D9E75', size: 13, label: 'D' },
 };
 //Hero properties
 let hero = {
