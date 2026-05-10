@@ -208,7 +208,7 @@ let waveTimer = 0, spawnCount = 0, spawnMax = 0, spawnInterval = 0, spawnTimer =
 const SCALE = 0.65; // reduce to make everything smaller
 //tower properties
 const TOWER_DEFS = {
-    sniper: { cost: 80, atk: 50, spd: 1.0, range: 230, color: '#378ADD', size: 14, label: 'S' },
+    sniper: { cost: 80, atk: 40, spd: 0.5, range: 230, color: '#378ADD', size: 14, label: 'S' },
     flamer: { cost: 120, atk: 30, spd: 2.5, range: 80, color: '#E24B4A', size: 14, label: 'F', splash: true },
     tank: { cost: 200, atk: 60, spd: 0.6, range: 110, color: '#7F77DD', size: 16, label: 'T' },
     drone: { cost: 150, atk: 35, spd: 1.5, range: 180, color: '#1D9E75', size: 13, label: 'D' },
@@ -753,20 +753,55 @@ function drawTower(t) {
 
     ctx.restore();
 }
-//bullets
+//bullets/Homing missiles
 function drawProjectile(p) {
-    ctx.save();
-    //laser effect
-    // ctx.fillStyle = p.color;
-    // ctx.fillRect(p.x - 2, p.y - 2, 6, 2);
 
-    //glow effect
+    ctx.save();
+
+    // 🚀 DRONE MISSILE
+    if (p.homing) {
+
+        const ang = Math.atan2(p.vy, p.vx);
+
+        ctx.translate(p.x, p.y);
+        ctx.rotate(ang);
+
+        // flame trail
+        ctx.fillStyle = '#ff9933';
+        ctx.beginPath();
+        ctx.moveTo(-10, 0);
+        ctx.lineTo(-16, -3);
+        ctx.lineTo(-16, 3);
+        ctx.closePath();
+        ctx.fill();
+
+        // missile body
+        ctx.fillStyle = '#dfe6e9';
+        ctx.fillRect(-8, -3, 14, 6);
+
+        // missile tip
+        ctx.fillStyle = '#ff4d4d';
+        ctx.beginPath();
+        ctx.moveTo(6, 0);
+        ctx.lineTo(0, -4);
+        ctx.lineTo(0, 4);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+        return;
+    }
+
+    // NORMAL BULLETS
     ctx.shadowColor = p.color;
     ctx.shadowBlur = 4;
+
     ctx.beginPath();
     ctx.arc(p.x, p.y, (p.r || 3) * 0.5, 0, Math.PI * 2);
+
     ctx.fillStyle = p.color;
     ctx.fill();
+
     ctx.restore();
 }
 
@@ -812,10 +847,14 @@ function drawBackground() {
 function drawFloatingTexts() {
     for (let t of floatingTexts) {
         ctx.save();
+
         ctx.globalAlpha = t.life / 60;
-        ctx.fillStyle = '#fff';
-        ctx.font = '14px Arial';
+        ctx.fillStyle = t.color || '#fff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+
         ctx.fillText(t.text, t.x, t.y);
+
         ctx.restore();
     }
 }
@@ -951,11 +990,12 @@ function addDeathEffect(x, y, color) {
     });
 }
 //coins
-function addFloatingText(x, y, text) {
+function addFloatingText(x, y, text, color = '#fff') {
     floatingTexts.push({
         x,
         y,
         text,
+        color,
         life: 60
     });
 }
@@ -1229,6 +1269,7 @@ function update() {
         for (let en of enemies) {
             if (en.dead) continue;
             if (t.type === 'tank' && en.flying) continue;
+            if (t.type === 'drone' && !en.flying) continue; // ✅ drone ignores ground
             const d = Math.hypot(en.x - t.x, en.y - t.y);
             if (d <= t.range) {
                 const score = en.flying
@@ -1248,21 +1289,85 @@ function update() {
 
             const pColor = t.type === 'flamer' ? '#ff6b35' : t.type === 'drone' ? '#1D9E75' : t.type === 'tank' ? '#7F77DD' : '#85B7EB';
             const ang = Math.atan2(best.y - t.y, best.x - t.x);
-            projectiles.push({ x: t.x, y: t.y, vx: Math.cos(ang) * 5, vy: Math.sin(ang) * 5, spd: 5, atk: t.atk, color: pColor, r: t.type === 'flamer' ? 4 : 3, splash: t.splash, splashR: 50, fromTowerType: t.type, dist: t.range * 1.2 });
+            projectiles.push({
+                x: t.x,
+                y: t.y,
+
+                vx: Math.cos(ang) * 5,
+                vy: Math.sin(ang) * 5,
+
+                spd: t.type === 'drone' ? 3.5 : 5,
+
+                atk: t.atk,
+                color: pColor,
+
+                r: t.type === 'drone' ? 5 : (t.type === 'flamer' ? 4 : 3),
+
+                splash: t.splash,
+                splashR: 50,
+
+                fromTowerType: t.type,
+
+                // 🚀 missile target
+                target: t.type === 'drone' ? best : null,
+
+                // 🚀 missile flag
+                homing: t.type === 'drone',
+
+                dist: t.range * 1.5
+            });
             t.cooldown = Math.round(60 / t.spd);
         }
     }
     //up projectiles
     for (let p of projectiles) {
-        // move in fixed direction (no homing)
+        // 🚀 HOMING MISSILE
+        if (p.homing && p.target && !p.target.dead) {
+
+            const dx = p.target.x - p.x;
+            const dy = p.target.y - p.y;
+
+            const dist = Math.hypot(dx, dy);
+
+            if (dist > 1) {
+
+                // normalize
+                const tx = dx / dist;
+                const ty = dy / dist;
+
+                // smooth steering
+                p.vx += (tx * p.spd - p.vx) * 0.08;
+                p.vy += (ty * p.spd - p.vy) * 0.08;
+
+                // limit speed
+                const v = Math.hypot(p.vx, p.vy);
+
+                p.vx = (p.vx / v) * p.spd;
+                p.vy = (p.vy / v) * p.spd;
+            }
+        }
+        // Bullets / straight projectile
         p.x += p.vx;
         p.y += p.vy;
+
+        // ✅ kill orphaned drone missiles
+        if (p.homing && (!p.target || p.target.dead)) {
+            p.dead = true;
+            continue; // skip hit check entirely
+        }
+
 
         // check hit against all enemies in radius
         let hit = false;
         for (let en of enemies) {
             if (en.dead) continue;
-            if (Math.hypot(en.x - p.x, en.y - p.y) > (en.size + 4)) continue;
+
+            if (p.fromTowerType === 'tank' && en.flying) continue;
+            // drone ONLY attacks flyers
+            if (p.fromTowerType === 'drone' && !en.flying) continue;
+
+            // ✅ must actually reach the enemy
+            if (Math.hypot(en.x - p.x, en.y - p.y) > en.size + (p.r || 3)) continue;
 
             // hit!
             if (p.splash) {
@@ -1299,6 +1404,14 @@ function update() {
                     }
                 } else {
                     addParticles(p.x, p.y, '#ffffff', 3);
+
+                    // MISS TEXT
+                    addFloatingText(
+                        en.x,
+                        en.y - 10,
+                        'MISS',
+                        '#ffdddd'
+                    );
                 }
             }
 
