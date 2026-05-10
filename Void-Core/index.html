@@ -7,8 +7,60 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <!-- Add home page -->
+
 <body>
-    <!-- Add settings, about,tutorial. -->
+    <div id="home-screen">
+        <canvas id="home-canvas"></canvas>
+
+        <div id="home-ui">
+            <div id="home-title">
+                <span id="title-main">TOWER DEFENSE</span>
+                <span id="title-sub">defend the base. survive all 20 waves.</span>
+            </div>
+
+            <div id="home-buttons">
+                <button id="play-btn">▶ Play</button>
+                <button id="how-btn">? How to Play</button>
+                <button id="about-btn">✦ About</button>
+            </div>
+        </div>
+
+        <!-- HOW TO PLAY PANEL -->
+        <div id="how-panel" class="home-panel hidden">
+            <button class="panel-close">✕</button>
+            <h2>How to Play</h2>
+            <div class="tip-grid">
+                <div class="tip"><span class="tip-icon">🖱️</span><strong>Click</strong> to move your hero</div>
+                <div class="tip"><span class="tip-icon">⇧+Click</span><strong>Shift+Click</strong> to place a tower
+                </div>
+                <div class="tip"><span class="tip-icon">🎯</span><strong>Click an enemy</strong> to attack it directly
+                </div>
+                <div class="tip"><span class="tip-icon">Q</span><strong>Press Q</strong> for hero AOE burst</div>
+                <div class="tip"><span class="tip-icon">▶</span><strong>Start</strong> button begins each wave</div>
+                <div class="tip"><span class="tip-icon">🏰</span>Don't let enemies reach the <strong>base!</strong>
+                </div>
+            </div>
+            <div class="tower-guide">
+                <div class="tg-row"><span style="color:#85B7EB">■</span> <strong>Sniper</strong> — long range, single
+                    target</div>
+                <div class="tg-row"><span style="color:#ff6b35">■</span> <strong>Flamer</strong> — short range, splash
+                    damage</div>
+                <div class="tg-row"><span style="color:#7F77DD">■</span> <strong>Mech</strong> — slow, heavy damage,
+                    ground only</div>
+                <div class="tg-row"><span style="color:#1D9E75">■</span> <strong>Drone</strong> — widest range, hits air
+                    + ground</div>
+            </div>
+        </div>
+
+        <!-- ABOUT PANEL -->
+        <div id="about-panel" class="home-panel hidden">
+            <button class="panel-close">✕</button>
+            <h2>About</h2>
+            <p>A tower defense game built with vanilla JS and Canvas API. Place towers, control your hero, and survive
+                20 waves of increasingly tough enemies — bugs, dinos, blobs, and flyers.</p>
+            <p style="margin-top:12px; color:#aaa; font-size:12px;">v0.1 — made with ☕ and too many late nights.</p>
+        </div>
+    </div>
     <div id="game-container">
         <canvas id="canvas"></canvas>
 
