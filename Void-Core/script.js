@@ -204,12 +204,14 @@ let selectedType = 'sniper';
 let waveActive = false, gameOver = false, gameWon = false;
 let animFrame;
 let waveTimer = 0, spawnCount = 0, spawnMax = 0, spawnInterval = 0, spawnTimer = 0;
+
+const SCALE = 0.65; // reduce to make everything smaller
 //tower properties
 const TOWER_DEFS = {
-    sniper: { cost: 50, atk: 25, spd: 1.2, range: 130, color: '#378ADD', size: 14, label: 'S' },
-    flamer: { cost: 80, atk: 15, spd: 2.5, range: 80, color: '#E24B4A', size: 14, label: 'F', splash: true },
-    tank: { cost: 120, atk: 60, spd: 0.6, range: 110, color: '#7F77DD', size: 16, label: 'T' },
-    drone: { cost: 100, atk: 35, spd: 1.5, range: 150, color: '#1D9E75', size: 13, label: 'D' },
+    sniper: { cost: 80, atk: 50, spd: 1.0, range: 230, color: '#378ADD', size: 14, label: 'S' },
+    flamer: { cost: 120, atk: 30, spd: 2.5, range: 80, color: '#E24B4A', size: 14, label: 'F', splash: true },
+    tank: { cost: 200, atk: 60, spd: 0.6, range: 110, color: '#7F77DD', size: 16, label: 'T' },
+    drone: { cost: 150, atk: 35, spd: 1.5, range: 180, color: '#1D9E75', size: 13, label: 'D' },
 };
 //Hero properties
 let hero = {
@@ -281,7 +283,7 @@ function generateDecor() {
 //create enemy
 function spawnEnemy(waveNum) {
     const wp = getWaypoints();
-    const types = ['bug', 'dino', 'blob', 'flyer']; //new update flyer
+    const types = ['bug', 'dino', 'blob', 'flyer', 'roamer']; //new update roamer
     const t = types[Math.floor(Math.random() * types.length)];
     let hp = 40 + waveNum * 18;
 
@@ -303,9 +305,13 @@ function spawnEnemy(waveNum) {
         spd *= 1.8;       // fast
         hp *= 0.6;        // fragile
     }
+    else if (t === 'roamer') {
+        spd *= 1.3;
+        hp *= 0.9;
+    }
     enemies.push({
-        x: wp[0].x,
-        y: wp[0].y,
+        x: t === 'roamer' ? -20 : wp[0].x,
+        y: t === 'roamer' ? Math.random() * canvas.height : wp[0].y,
         wpIdx: 0,
         progress: 0,
 
@@ -318,15 +324,18 @@ function spawnEnemy(waveNum) {
         // ⭐ wave motion data
         waveOffset: Math.random() * Math.PI * 2,
 
-        reward: 10 + waveNum * 2,
+        // reward: 10 + waveNum * 2, // high gold
+        reward: 3 + waveNum, //low gold
 
         size: t === 'flyer' ? 12 :
-            t === 'dino' ? 18 :
-                t === 'blob' ? 14 : 12,
+            t === 'roamer' ? 13 :
+                t === 'dino' ? 18 :
+                    t === 'blob' ? 14 : 12,
 
         color: t === 'flyer' ? '#58d3ff' :
-            t === 'dino' ? '#9b59b6' :
-                t === 'blob' ? '#e67e22' : '#c0392b',
+            t === 'roamer' ? '#f1c40f' :
+                t === 'dino' ? '#9b59b6' :
+                    t === 'blob' ? '#e67e22' : '#c0392b',
     });
 }
 //start
@@ -493,7 +502,7 @@ function updateUI() {
 function drawPath() {
     const wp = getWaypoints();
     ctx.save();
-    ctx.strokeStyle = 'rgba(120,80,40,0.9)';
+    ctx.strokeStyle = 'rgba(160,100,40,0.95)';
     ctx.lineWidth = 36;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -511,7 +520,7 @@ function drawBase() {
     const cx = canvas.width * 0.93;
     const cy = canvas.height * 0.65;
 
-    const size = 60;
+    const size = 38;
 
     if (baseImg.complete && baseImg.naturalWidth > 0) {
         ctx.drawImage(baseImg, cx - size / 2, cy - size / 2, size, size);
@@ -566,8 +575,8 @@ function drawEnemy(en) {
 
     // breathing effect
     const pulse = Math.sin(Date.now() * 0.005) * 2;
-    const size = en.size * 2 + pulse;
-
+    const size = (en.size * 2 + pulse) * SCALE;
+    const s = en.size * SCALE;
     // movement direction rotation
     const angle = Math.atan2(en.vy || 0, en.vx || 1);
 
@@ -576,18 +585,14 @@ function drawEnemy(en) {
         ctx.save();
         ctx.globalAlpha = 0.2;
         ctx.fillStyle = '#000';
-
-        const shadowSize = en.size * 0.8;
-
+        const shadowSize = en.size * SCALE * 0.8;
         ctx.beginPath();
         ctx.arc(en.x + 6, en.y + 10, shadowSize, 0, Math.PI * 2);
         ctx.fill();
-
         ctx.restore();
     }
 
     ctx.save();
-
     // 🎯 ALTITUDE (floating effect)
     const altitude = en.flying
         ? Math.sin(Date.now() * 0.003 + (en.waveOffset || 0)) * 6
@@ -601,14 +606,77 @@ function drawEnemy(en) {
     }
 
 
-    // draw enemy
-    if (img && img.complete) {
-        ctx.drawImage(img, -size / 2, -size / 2, size, size);
-    } else {
+    // draw enemy with images
+    // if (img && img.complete) {
+    //     ctx.drawImage(img, -size / 2, -size / 2, size, size);
+    // } else {
+    //     ctx.fillStyle = en.color;
+    //     ctx.beginPath();
+    //     ctx.arc(0, 0, en.size, 0, Math.PI * 2);
+    //     ctx.fill();
+    // }
+
+    // draw enemy with just pixels
+    if (en.type === 'bug') {
+        // small red circle with legs
+        ctx.fillStyle = en.color;
+        ctx.beginPath(); ctx.arc(0, 0, s, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(-s, -3); ctx.lineTo(-s - 5, -6); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-s, 0); ctx.lineTo(-s - 5, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-s, 3); ctx.lineTo(-s - 5, 6); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(s, -3); ctx.lineTo(s + 5, -6); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(s, 0); ctx.lineTo(s + 5, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(s, 3); ctx.lineTo(s + 5, 6); ctx.stroke();
+
+    } else if (en.type === 'dino') {
+        ctx.fillStyle = en.color;
+        ctx.fillRect(-s, -s * 0.8, s * 2, s * 1.6);
+        ctx.fillRect(s * 0.3, -s * 1.3, s * 0.8, s * 0.7);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(s * 0.5, -s * 1.2, 4, 4);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(s * 0.6, -s * 1.1, 2, 2);
+
+    } else if (en.type === 'blob') {
+        const wobble = Math.sin(Date.now() * 0.008) * 2;
         ctx.fillStyle = en.color;
         ctx.beginPath();
-        ctx.arc(0, 0, en.size, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, s + wobble, s - wobble * 0.5, 0, 0, Math.PI * 2);
         ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(-3, -2, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(3, -2, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath(); ctx.arc(-2, -2, 1.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(4, -2, 1.5, 0, Math.PI * 2); ctx.fill();
+
+    } else if (en.type === 'flyer') {
+        ctx.fillStyle = en.color;
+        ctx.beginPath();
+        ctx.moveTo(0, -s); ctx.lineTo(s * 0.6, 0);
+        ctx.lineTo(0, s); ctx.lineTo(-s * 0.6, 0);
+        ctx.closePath(); ctx.fill();
+        const wingFlap = Math.sin(Date.now() * 0.015) * 3;
+        ctx.fillStyle = 'rgba(88,211,255,0.5)';
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(-s * 1.8, -s * 0.5 - wingFlap);
+        ctx.lineTo(-s * 0.5, s * 0.3); ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(s * 1.8, -s * 0.5 - wingFlap);
+        ctx.lineTo(s * 0.5, s * 0.3); ctx.closePath(); ctx.fill();
+
+    } else if (en.type === 'roamer') {
+        ctx.save();
+        ctx.rotate(Date.now() * 0.003);
+        ctx.fillStyle = en.color;
+        ctx.fillRect(-s, -s, s * 2, s * 2);
+        ctx.strokeStyle = '#f39c12';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-s, -s, s * 2, s * 2);
+        ctx.restore();
+        ctx.fillStyle = '#000';
+        ctx.beginPath(); ctx.arc(2, -1, 2, 0, Math.PI * 2); ctx.fill();
     }
 
     ctx.restore();
@@ -616,13 +684,10 @@ function drawEnemy(en) {
     // 🔋 HP BAR (draw OUTSIDE rotation — important!)
     const barW = en.size * 2.2;
     const barH = 3;
-
     const bx = en.x - barW / 2;
     const by = en.y - en.size - 7;
-
     ctx.fillStyle = '#333';
     ctx.fillRect(bx, by, barW, barH);
-
     ctx.fillStyle = en.hp > en.maxHp * 0.5 ? '#2ecc71' : '#e74c3c';
     ctx.fillRect(bx, by, barW * (en.hp / en.maxHp), barH);
     ctx.globalAlpha = 1;
@@ -641,16 +706,49 @@ function drawTower(t) {
     // push backward when shooting
     ctx.translate(-recoil, 0);
 
-    const size = t.size * 2 + recoil;
+    const size = (t.size * 2 + recoil) * 0.65;
 
-    if (img && img.complete) {
-        ctx.drawImage(img, -size / 2, -size / 2, size * 1.2, size * 1.2); //fix img scaling
-    } else {
-        // fallback (if image not loaded yet)
-        ctx.beginPath();
-        ctx.arc(0, 0, t.size, 0, Math.PI * 2);
+    //draw towers with images
+    // if (img && img.complete) {
+    //     ctx.drawImage(img, -size / 2, -size / 2, size * 1.2, size * 1.2); //fix img scaling
+    // } else {
+    //     // fallback (if image not loaded yet)
+    //     ctx.beginPath();
+    //     ctx.arc(0, 0, t.size, 0, Math.PI * 2);
+    //     ctx.fillStyle = t.color;
+    //     ctx.fill();
+    // }
+
+    // draw towers with just pixels
+    if (t.type === 'sniper') {
+        // slim blue cross
         ctx.fillStyle = t.color;
-        ctx.fill();
+        ctx.fillRect(-size * 0.3, -size * 0.3, size * 0.6, size * 0.6);
+        ctx.fillRect(-size * 0.7, -size * 0.15, size * 1.4, size * 0.3); // barrel
+
+    } else if (t.type === 'flamer') {
+        // red squat box with nozzle
+        ctx.fillStyle = t.color;
+        ctx.fillRect(-size * 0.4, -size * 0.4, size * 0.8, size * 0.8);
+        ctx.fillStyle = '#ffaa00';
+        ctx.fillRect(size * 0.35, -size * 0.1, size * 0.5, size * 0.2);
+
+    } else if (t.type === 'tank') {
+        // purple wide base + turret
+        ctx.fillStyle = t.color;
+        ctx.fillRect(-size * 0.6, -size * 0.35, size * 1.2, size * 0.7);
+        ctx.fillStyle = '#9b8fe0';
+        ctx.fillRect(-size * 0.25, -size * 0.25, size * 0.5, size * 0.5);
+        ctx.fillStyle = t.color;
+        ctx.fillRect(size * 0.2, -size * 0.1, size * 0.6, size * 0.2);
+
+    } else if (t.type === 'drone') {
+        // teal X shape (rotary)
+        ctx.fillStyle = t.color;
+        ctx.fillRect(-size * 0.15, -size * 0.7, size * 0.3, size * 1.4);
+        ctx.fillRect(-size * 0.7, -size * 0.15, size * 1.4, size * 0.3);
+        ctx.fillStyle = '#0f6e56';
+        ctx.beginPath(); ctx.arc(0, 0, size * 0.2, 0, Math.PI * 2); ctx.fill();
     }
 
     ctx.restore();
@@ -664,9 +762,9 @@ function drawProjectile(p) {
 
     //glow effect
     ctx.shadowColor = p.color;
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 4;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r || 3, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, (p.r || 3) * 0.5, 0, Math.PI * 2);
     ctx.fillStyle = p.color;
     ctx.fill();
     ctx.restore();
@@ -695,17 +793,21 @@ function drawParticle(p) {
 }
 //bg
 function drawBackground() {
-    ctx.fillStyle = '#5c3a1e';
+    // dark base like home screen
+    ctx.fillStyle = '#1a1008';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#4a2e14';
-    for (let i = 0; i < 30; i++) {
-        const bx = (i * 73 + 20) % canvas.width;
-        const by = (i * 47 + 30) % (canvas.height - 60);
-        ctx.beginPath();
-        ctx.arc(bx, by, 4, 0, Math.PI * 2);
-        ctx.fill();
+
+    // subtle grid lines (same as home)
+    ctx.strokeStyle = 'rgba(255,200,80,0.04)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < canvas.width; i += 60) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+    }
+    for (let i = 0; i < canvas.height; i += 60) {
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
     }
 }
+
 //gold per kill
 function drawFloatingTexts() {
     for (let t of floatingTexts) {
@@ -739,14 +841,48 @@ function drawHero(h) {
     // slight push back when attacking
     ctx.translate(-recoil, 0);
 
-    if (heroImg.complete) {
-        ctx.drawImage(heroImg, -20, -20, 40, 40);
-    } else {
-        ctx.fillStyle = '#00ffff';
-        ctx.beginPath();
-        ctx.arc(0, 0, h.size, 0, Math.PI * 2);
-        ctx.fill();
+    //Draw Hero with images
+    // if (heroImg.complete) {
+    //     ctx.drawImage(heroImg, -20, -20, 40, 40);
+    // } else {
+    //     ctx.fillStyle = '#00ffff';
+    //     ctx.beginPath();
+    //     ctx.arc(0, 0, h.size, 0, Math.PI * 2);
+    //     ctx.fill();
+    // }
+
+    // Draw Hero  tank body (wide green base)
+    // tank body (wide green base)
+    ctx.fillStyle = '#4a7c3f';
+    ctx.fillRect(-10, -8, 20, 16);
+
+    // tracks on TOP and BOTTOM (these are the left/right sides when tank faces right)
+    ctx.fillStyle = '#2a4a25';
+    ctx.fillRect(-12, -11, 24, 5);   // top track
+    ctx.fillRect(-12, 6, 24, 5);     // bottom track
+
+    // track segments detail
+    ctx.fillStyle = '#1a3018';
+    for (let i = -10; i < 12; i += 5) {
+        ctx.fillRect(i, -11, 2, 5);  // top track lines
+        ctx.fillRect(i, 6, 2, 5);    // bottom track lines
     }
+
+    // turret base
+    ctx.fillStyle = '#5a9e4f';
+    ctx.beginPath();
+    ctx.arc(0, 0, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // cannon barrel (longer now)
+    ctx.fillStyle = '#3a6030';
+    ctx.fillRect(3, -2, 16, 4);
+
+    // hatch bolt detail
+    ctx.fillStyle = '#3a6030';
+    ctx.fillRect(-3, -3, 6, 6);
+    ctx.fillStyle = '#7fd46e';
+    ctx.fillRect(-1, -1, 2, 2);
 
     ctx.restore();
 
@@ -755,10 +891,10 @@ function drawHero(h) {
     const barH = 4;
 
     ctx.fillStyle = '#333';
-    ctx.fillRect(h.x - barW / 2, h.y - 25, barW, barH);
+    ctx.fillRect(h.x - barW / 2, h.y - 18, barW, barH);
 
     ctx.fillStyle = '#2ecc71';
-    ctx.fillRect(h.x - barW / 2, h.y - 25, barW * (h.hp / h.maxHp), barH);
+    ctx.fillRect(h.x - barW / 2, h.y - 18, barW * (h.hp / h.maxHp), barH);
 
     //Show respawn timer
     if (h.dead) {
@@ -869,15 +1005,18 @@ function update() {
                     playSound(shootSounds.tank); //  shoot sound (mech sound)
 
                     // 🔫 SHOOT PROJECTILE
+                    const hAng = Math.atan2(hero.targetEnemy.y - hero.y, hero.targetEnemy.x - hero.x);
                     projectiles.push({
                         x: hero.x,
                         y: hero.y,
-                        target: hero.targetEnemy,
+                        vx: Math.cos(hAng) * 6,
+                        vy: Math.sin(hAng) * 6,
                         spd: 6,
                         atk: hero.atk,
                         color: '#00ffff',
                         r: 4,
-                        fromHero: true // ⭐ mark as hero bullet
+                        fromHero: true,
+                        dist: hero.range * 1.5
                     });
 
                     // 💥 muzzle effect
@@ -1040,6 +1179,21 @@ function update() {
             }
             continue;
         }
+        // roamer movement
+        if (en.type === 'roamer') {
+            en.vx = en.spd * gameSpeed;
+            en.vy = Math.sin(Date.now() * 0.002 + en.waveOffset) * 0.8; // slight drift
+            en.x += en.vx;
+            en.y += en.vy;
+
+            if (en.x > canvas.width + 30) {
+                en.dead = true;
+                lives--;
+                updateUI();
+                if (lives <= 0) { gameOver = true; showMsg('💀 Game Over! Base destroyed!', 99999); }
+            }
+            continue;
+        }
 
         const target = wp[en.wpIdx + 1];
         const dx = target.x - en.x, dy = target.y - en.y;
@@ -1093,103 +1247,71 @@ function update() {
             playSound(shootSounds[t.type]);
 
             const pColor = t.type === 'flamer' ? '#ff6b35' : t.type === 'drone' ? '#1D9E75' : t.type === 'tank' ? '#7F77DD' : '#85B7EB';
-            projectiles.push({ x: t.x, y: t.y, tx: best.x, ty: best.y, target: best, spd: 5, atk: t.atk, color: pColor, r: t.type === 'flamer' ? 4 : 3, splash: t.splash, splashR: 50, fromTowerType: t.type });
+            const ang = Math.atan2(best.y - t.y, best.x - t.x);
+            projectiles.push({ x: t.x, y: t.y, vx: Math.cos(ang) * 5, vy: Math.sin(ang) * 5, spd: 5, atk: t.atk, color: pColor, r: t.type === 'flamer' ? 4 : 3, splash: t.splash, splashR: 50, fromTowerType: t.type, dist: t.range * 1.2 });
             t.cooldown = Math.round(60 / t.spd);
         }
     }
     //up projectiles
     for (let p of projectiles) {
-        if (!p.target || p.target.dead) {
-            p.dead = true;
-            continue;
-        }
-        const dx = p.target.x - p.x, dy = p.target.y - p.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist < p.spd || p.target.dead) {
-            if (!p.target.dead) {
-                if (p.splash) {
-                    for (let en of enemies) {
-                        if (
-                            !en.dead &&
-                            !en.flying && // ✈️ flyers immune to splash
-                            Math.hypot(en.x - p.target.x, en.y - p.target.y) < p.splashR
-                        ) {
-                            en.hp -= p.atk * 0.6;
-                            if (en.hp <= 0 && !en.dead) {
-                                en.dead = true;
-                                en.dying = true;
-                                en.deathTimer = 12;
+        // move in fixed direction (no homing)
+        p.x += p.vx;
+        p.y += p.vy;
 
-                                addDeathEffect(en.x, en.y, en.color);
-                                playSound(explosionSound);
-                                coins += en.reward;
-                                addFloatingText(en.x, en.y, "+" + en.reward);
-                                updateUI();
-                            }
-                        }
-                    }
-                } else {
-                    // SNIPER vs FLYER MISS CHANCE // patch miss chance later
-                    let hit = true;
+        // check hit against all enemies in radius
+        let hit = false;
+        for (let en of enemies) {
+            if (en.dead) continue;
+            if (Math.hypot(en.x - p.x, en.y - p.y) > (en.size + 4)) continue;
 
-                    if (p.fromTowerType === 'sniper' && p.target.flying) {
-                        hit = Math.random() > 0.5;
-                    }
-
-                    if (hit) {
-                        p.target.hp -= p.atk;
-
-                        // 🔥 HERO HIT EFFECT (ONLY ON HIT)
-                        if (p.fromHero) {
-                            addParticles(p.target.x, p.target.y, '#00ffff', 12);
-
-                            particles.push({
-                                x: p.target.x,
-                                y: p.target.y,
-                                r: 5,
-                                grow: 4,
-                                color: '#00ffff',
-                                life: 15,
-                                maxLife: 15,
-                                ring: true
-                            });
-                        }
-
-                        // ☠️ DEATH CHECK (ONLY ON HIT)
-                        if (p.target.hp <= 0 && !p.target.dead) {
-                            p.target.dead = true;
-                            p.target.dying = true;
-                            p.target.deathTimer = 12;
-
-                            addDeathEffect(p.target.x, p.target.y, p.target.color);
+            // hit!
+            if (p.splash) {
+                for (let en2 of enemies) {
+                    if (!en2.dead && !en2.flying && Math.hypot(en2.x - p.x, en2.y - p.y) < p.splashR) {
+                        en2.hp -= p.atk * 0.6;
+                        if (en2.hp <= 0 && !en2.dead) {
+                            en2.dead = true; en2.dying = true; en2.deathTimer = 12;
+                            addDeathEffect(en2.x, en2.y, en2.color);
                             playSound(explosionSound);
-                            coins += p.target.reward;
-                            addFloatingText(p.target.x, p.target.y, "+" + p.target.reward);
+                            coins += en2.reward;
+                            addFloatingText(en2.x, en2.y, "+" + en2.reward);
                             updateUI();
                         }
-
-                    } else {
-                        // 💨 MISS EFFECT // add text 'miss' later
-                        addParticles(p.x, p.y, '#ffffff', 3);
-                    }
-                    if (p.target.hp <= 0 && !p.target.dead) {
-                        p.target.dead = true;
-                        p.target.dying = true;
-                        p.target.deathTimer = 12;
-
-                        addDeathEffect(p.target.x, p.target.y, p.target.color);
-                        playSound(explosionSound);
-                        coins += p.target.reward;
-                        addFloatingText(p.target.x, p.target.y, "+" + p.target.reward);
-                        updateUI();
                     }
                 }
-                addParticles(p.x, p.y, p.color, 3);
+            } else {
+                let didHit = true;
+                if (p.fromTowerType === 'sniper' && en.flying) didHit = Math.random() > 0.5;
+
+                if (didHit) {
+                    en.hp -= p.atk;
+                    if (p.fromHero) {
+                        addParticles(en.x, en.y, '#00ffff', 12);
+                        particles.push({ x: en.x, y: en.y, r: 5, grow: 4, color: '#00ffff', life: 15, maxLife: 15, ring: true });
+                    }
+                    if (en.hp <= 0 && !en.dead) {
+                        en.dead = true; en.dying = true; en.deathTimer = 12;
+                        addDeathEffect(en.x, en.y, en.color);
+                        playSound(explosionSound);
+                        coins += en.reward;
+                        addFloatingText(en.x, en.y, "+" + en.reward);
+                        updateUI();
+                    }
+                } else {
+                    addParticles(p.x, p.y, '#ffffff', 3);
+                }
             }
+
+            addParticles(p.x, p.y, p.color, 3);
+            hit = true;
+            break;
+        }
+
+        // kill if hit or out of range
+        if (hit || p.dist <= 0) {
             p.dead = true;
         } else {
-            p.x += (dx / dist) * p.spd;
-            p.y += (dy / dist) * p.spd;
+            p.dist -= p.spd;
         }
     }
     //RECALIBRATE PARTICLES
