@@ -209,8 +209,8 @@ const SCALE = 0.65; // reduce to make everything smaller
 //tower properties
 const TOWER_DEFS = {
     sniper: { cost: 80, atk: 40, spd: 0.5, range: 230, color: '#378ADD', size: 14, label: 'S' },
-    flamer: { cost: 120, atk: 30, spd: 2.5, range: 80, color: '#E24B4A', size: 14, label: 'F', splash: true },
-    tank: { cost: 200, atk: 60, spd: 0.6, range: 110, color: '#7F77DD', size: 16, label: 'T' },
+    flamer: { cost: 120, atk: 30, spd: 2.5, range: 100, color: '#E24B4A', size: 14, label: 'F', splash: true },
+    tank: { cost: 200, atk: 60, spd: 0.6, range: 110, color: '#7F77DD', size: 16, label: 'T', splash: true },
     drone: { cost: 150, atk: 35, spd: 1.5, range: 180, color: '#1D9E75', size: 13, label: 'D' },
 };
 //Hero properties
@@ -721,17 +721,53 @@ function drawTower(t) {
 
     // draw towers with just pixels
     if (t.type === 'sniper') {
-        // slim blue cross
+        // base body
         ctx.fillStyle = t.color;
         ctx.fillRect(-size * 0.3, -size * 0.3, size * 0.6, size * 0.6);
-        ctx.fillRect(-size * 0.7, -size * 0.15, size * 1.4, size * 0.3); // barrel
+
+        // long barrel
+        ctx.fillStyle = t.color;
+        ctx.fillRect(-size * 0.1, -size * 0.08, size * 1.8, size * 0.16); // extra long
+
+        // barrel tip accent
+        ctx.fillStyle = '#aad4ff';
+        ctx.fillRect(size * 1.6, -size * 0.08, size * 0.2, size * 0.16);
+
+        // scope on top
+        ctx.fillStyle = '#1a5a9a';
+        ctx.fillRect(size * 0.1, -size * 0.35, size * 0.5, size * 0.15);
+
+        // scope lens
+        ctx.fillStyle = '#aad4ff';
+        ctx.beginPath();
+        ctx.arc(size * 0.35, -size * 0.28, size * 0.07, 0, Math.PI * 2);
+        ctx.fill();
 
     } else if (t.type === 'flamer') {
         // red squat box with nozzle
+        // main body
         ctx.fillStyle = t.color;
         ctx.fillRect(-size * 0.4, -size * 0.4, size * 0.8, size * 0.8);
+
+        const barrelRecoil = t.barrelRecoil || [0, 0];
+
+        // TOP barrel
+        ctx.save();
+        ctx.translate(-barrelRecoil[0], 0); // recoil pushes barrel back
+        ctx.fillStyle = '#cc3300';
+        ctx.fillRect(-size * 0.05, -size * 0.35, size * 0.9, size * 0.18); // top barrel
         ctx.fillStyle = '#ffaa00';
-        ctx.fillRect(size * 0.35, -size * 0.1, size * 0.5, size * 0.2);
+        ctx.fillRect(size * 0.5, -size * 0.35, size * 0.15, size * 0.18); // tip
+        ctx.restore();
+
+        // BOTTOM barrel
+        ctx.save();
+        ctx.translate(-barrelRecoil[1], 0);
+        ctx.fillStyle = '#cc3300';
+        ctx.fillRect(-size * 0.05, size * 0.17, size * 0.9, size * 0.18); // bottom barrel
+        ctx.fillStyle = '#ffaa00';
+        ctx.fillRect(size * 0.5, size * 0.17, size * 0.15, size * 0.18); // tip
+        ctx.restore();
 
     } else if (t.type === 'tank') {
         // purple wide base + turret
@@ -750,7 +786,8 @@ function drawTower(t) {
         ctx.fillStyle = '#0f6e56';
         ctx.beginPath(); ctx.arc(0, 0, size * 0.2, 0, Math.PI * 2); ctx.fill();
     }
-
+    ctx.globalAlpha = 1;      // ✅ reset alpha in case any tower draw dirtied it
+    ctx.shadowBlur = 0;       // ✅ reset shadow too
     ctx.restore();
 }
 //bullets/Homing missiles
@@ -1263,6 +1300,12 @@ function update() {
     //up towers
     for (let t of towers) {
         t.recoil = Math.max(0, (t.recoil || 0) - 0.5); // before cooldown check for recoil
+        // ✅ decay individual barrel recoil for flamer
+        if (t.barrelRecoil) {
+            t.barrelRecoil[0] = Math.max(0, t.barrelRecoil[0] - 0.5);
+            t.barrelRecoil[1] = Math.max(0, t.barrelRecoil[1] - 0.5);
+        }
+
         t.cooldown = Math.max(0, t.cooldown - 1);
         if (t.cooldown > 0) continue;
         let best = null, bestDist = 9999;
@@ -1285,9 +1328,26 @@ function update() {
         if (best) {
             t.angle = Math.atan2(best.y - t.y, best.x - t.x); //rotation toward enemy
             t.recoil = 6; // strength of recoil
+
+            // ✅ alternate which barrel fired
+            if (t.type === 'flamer') {
+                t.lastBarrel = (t.lastBarrel === 0) ? 1 : 0;
+                t.barrelRecoil = [0, 0];
+                t.barrelRecoil[t.lastBarrel] = 6;
+            }
+
             playSound(shootSounds[t.type]);
 
             const pColor = t.type === 'flamer' ? '#ff6b35' : t.type === 'drone' ? '#1D9E75' : t.type === 'tank' ? '#7F77DD' : '#85B7EB';
+
+            // ✅ muzzle flash at barrel tip
+            const muzzleAng = t.angle;
+            const muzzleDist = t.size * 1.2;
+            const mx = t.x + Math.cos(muzzleAng) * muzzleDist;
+            const my = t.y + Math.sin(muzzleAng) * muzzleDist;
+            addParticles(mx, my, pColor, 5);
+            particles.push({ x: mx, y: my, r: 4, grow: 5, color: '#ffffff', life: 8, maxLife: 8, ring: true });
+
             const ang = Math.atan2(best.y - t.y, best.x - t.x);
             projectiles.push({
                 x: t.x,
@@ -1352,10 +1412,12 @@ function update() {
 
         // ✅ kill orphaned drone missiles
         if (p.homing && (!p.target || p.target.dead)) {
+            // ✅ fizzle effect when target dies mid-flight
+            addParticles(p.x, p.y, '#1D9E75', 6);
+            particles.push({ x: p.x, y: p.y, r: 4, grow: 4, color: '#aaffcc', life: 10, maxLife: 10, ring: true });
             p.dead = true;
-            continue; // skip hit check entirely
+            continue;
         }
-
 
         // check hit against all enemies in radius
         let hit = false;
@@ -1415,7 +1477,14 @@ function update() {
                 }
             }
 
-            addParticles(p.x, p.y, p.color, 3);
+            // ✅ drone missile hit explosion
+            if (p.homing) {
+                addDeathEffect(p.x, p.y, '#1D9E75');
+                addParticles(p.x, p.y, '#58d3ff', 15);
+                particles.push({ x: p.x, y: p.y, r: 8, grow: 8, color: '#ffffff', life: 12, maxLife: 12, ring: true });
+            } else {
+                addParticles(p.x, p.y, p.color, 3);
+            }
             hit = true;
             break;
         }
