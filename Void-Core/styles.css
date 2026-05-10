@@ -350,6 +350,13 @@ body {
     color: #ccc;
 }
 
+.creator-name {
+    margin-top: 14px;
+    color: #f5d27a;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
 /* panels */
 .home-panel {
     position: absolute;
