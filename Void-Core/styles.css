@@ -4,27 +4,33 @@
     padding: 0;
 }
 
+html,
 body {
+    width: 100%;
+    min-height: 100%;
     background: #1a1a2e;
+    overflow: hidden;
 }
 
 /* canvas */
 #game-container {
     position: relative;
     width: 100%;
-    height: calc(100vh - 54px);
-    /* 54px = bottom bar height */
+    height: 100vh;
+    height: 100dvh;
     background: #5c3a1e;
     overflow: hidden;
     font-family: var(--font-sans);
     user-select: none;
-    border-radius: var(--border-radius-lg);
+    border-radius: 0;
 }
 
 #canvas {
     position: absolute;
     top: 0;
     left: 0;
+    display: block;
+    max-width: 100%;
 }
 
 #ui {
@@ -40,18 +46,21 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
+    gap: 8px;
+    padding: max(8px, env(safe-area-inset-top)) 12px 8px;
     background: rgba(0, 0, 0, 0.6);
 }
 
 #top-bar span {
     color: #fff;
-    font-size: 13px;
+    font-size: clamp(11px, 2.4vw, 13px);
     font-weight: 500;
+    white-space: nowrap;
 }
 
 #wave-bar {
     text-align: center;
+    min-width: 0;
 }
 
 #bottom-bar {
@@ -63,9 +72,21 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
+    padding: 8px 12px max(8px, env(safe-area-inset-bottom));
     pointer-events: all;
     flex-wrap: wrap;
+}
+
+#tower-label {
+    color: #aaa;
+    font-size: 11px;
+    flex: 0 0 auto;
+}
+
+#wave-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
 }
 
 /* towers */
@@ -82,6 +103,8 @@ body {
     align-items: center;
     gap: 2px;
     min-width: 56px;
+    min-height: 54px;
+    flex: 0 0 auto;
 }
 
 .tower-btn:hover {
@@ -140,14 +163,15 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     color: #fff;
-    font-size: 20px;
+    font-size: clamp(15px, 4vw, 20px);
     font-weight: 500;
     background: rgba(0, 0, 0, 0.7);
-    padding: 12px 24px;
+    padding: 12px 18px;
     border-radius: 10px;
     display: none;
     text-align: center;
     pointer-events: none;
+    width: min(90vw, 460px);
 }
 
 #instructions {
@@ -161,6 +185,8 @@ body {
     border-radius: 6px;
     line-height: 1.6;
     pointer-events: none;
+    max-width: min(240px, calc(100vw - 16px));
+    text-align: right;
 }
 
 /* audio */
@@ -191,7 +217,7 @@ body {
     top: 46px;
     /* just below the top bar */
     right: 10px;
-    width: 220px;
+    width: min(220px, calc(100vw - 20px));
     background: rgba(15, 15, 35, 0.97);
     border: 1.5px solid #4a6fa5;
     border-radius: 10px;
@@ -249,11 +275,13 @@ body {
 #home-screen {
     position: relative;
     width: 100%;
-    height: 100vh;
+    min-height: 100vh;
+    min-height: 100dvh;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 24px;
 }
 
 #home-canvas {
@@ -270,7 +298,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 48px;
+    gap: clamp(24px, 6vh, 48px);
+    width: min(100%, 900px);
 }
 
 #home-title {
@@ -284,14 +313,17 @@ body {
     font-size: clamp(36px, 6vw, 72px);
     font-weight: 700;
     color: #ffd700;
-    letter-spacing: 6px;
+    letter-spacing: clamp(1px, 1vw, 6px);
     text-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 #title-sub {
-    font-size: 14px;
+    font-size: clamp(12px, 2.5vw, 14px);
     color: #aaa;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
+    text-align: center;
 }
 
 #home-buttons {
@@ -299,7 +331,7 @@ body {
     flex-direction: column;
     gap: 12px;
     align-items: center;
-    width: 220px;
+    width: min(220px, 100%);
 }
 
 #home-buttons button {
@@ -367,8 +399,10 @@ body {
     background: rgba(10, 10, 25, 0.97);
     border: 1.5px solid #4a6fa5;
     border-radius: 14px;
-    padding: 28px 32px;
-    width: min(480px, 90vw);
+    padding: clamp(20px, 5vw, 28px) clamp(18px, 5vw, 32px);
+    width: min(480px, calc(100vw - 24px));
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
     color: #ddd;
 }
 
@@ -409,7 +443,7 @@ body {
 
 .tip-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 20px;
 }
@@ -454,4 +488,106 @@ body {
 
 #game-container {
     display: none;
+}
+
+@media (max-width: 720px) {
+    #top-bar {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    #bottom-bar {
+        gap: 6px;
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .tower-btn {
+        min-width: 52px;
+        min-height: 50px;
+        padding: 5px 6px;
+        font-size: 10px;
+    }
+
+    .tower-btn .icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    #wave-actions {
+        margin-left: 0;
+    }
+
+    #instructions {
+        top: 42px;
+        right: 6px;
+        font-size: 9px;
+    }
+
+    .tip-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    #home-screen {
+        align-items: flex-start;
+        padding-top: 12vh;
+    }
+
+    #title-main {
+        font-size: clamp(28px, 11vw, 44px);
+    }
+
+    #bottom-bar {
+        justify-content: center;
+    }
+
+    #tower-label {
+        flex-basis: 100%;
+        text-align: center;
+    }
+
+    #wave-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    #start-btn,
+    #reset-btn {
+        min-width: min(120px, 42vw);
+    }
+
+    #settings-panel {
+        right: 6px;
+    }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+    #home-ui {
+        gap: 16px;
+    }
+
+    #title-main {
+        font-size: clamp(24px, 7vh, 40px);
+    }
+
+    #home-buttons {
+        flex-direction: row;
+        width: min(620px, 100%);
+    }
+
+    #home-buttons button {
+        padding: 10px 8px;
+    }
+
+    .tower-btn {
+        min-height: 44px;
+        flex-direction: row;
+    }
+
+    .tower-btn .icon {
+        width: 22px;
+        height: 22px;
+    }
 }
