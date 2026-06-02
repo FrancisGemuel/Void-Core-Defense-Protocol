@@ -1,36 +1,4 @@
-﻿canvas.addEventListener('click', (e) => {
-    if (gameOver || gameWon) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-
-    // =========================
-    // ðŸ¹ HERO CONTROL (default)
-    // =========================
-    if (!e.shiftKey) {
-
-        // check if clicked enemy â†’ ATTACK
-        for (let en of enemies) {
-            if (!en.dead && Math.hypot(en.x - mx, en.y - my) < en.size) {
-                hero.targetEnemy = en;
-                hero.targetX = null;
-                hero.targetY = null;
-                return;
-            }
-        }
-
-        // otherwise MOVE
-        hero.targetEnemy = null;
-        hero.targetX = mx;
-        hero.targetY = my;
-        addMoveTrace(mx, my);
-        return;
-    }
-
-    // =========================
-    // ðŸ—ï¸ TOWER PLACEMENT (SHIFT + CLICK)
-    // =========================
+function placeTowerAt(mx, my) {
     const def = TOWER_DEFS[selectedType];
 
     if (coins < def.cost) { showMsg('Not enough gold!', 900); return; }
@@ -53,6 +21,33 @@
     coins -= def.cost;
     towers.push({ x: mx, y: my, type: selectedType, cooldown: 0, ...def });
     updateUI();
+}
+
+canvas.addEventListener('click', (e) => {
+    if (gameOver || gameWon) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    if (!e.shiftKey) {
+        for (let en of enemies) {
+            if (!en.dead && Math.hypot(en.x - mx, en.y - my) < en.size) {
+                hero.targetEnemy = en;
+                hero.targetX = null;
+                hero.targetY = null;
+                return;
+            }
+        }
+
+        hero.targetEnemy = null;
+        hero.targetX = mx;
+        hero.targetY = my;
+        addMoveTrace(mx, my);
+        return;
+    }
+
+    placeTowerAt(mx, my);
 });
 
 canvas.addEventListener('contextmenu', (e) => {
@@ -61,6 +56,11 @@ canvas.addEventListener('contextmenu', (e) => {
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
+
+    if (e.shiftKey) {
+        if (!gameOver && !gameWon) placeTowerAt(mx, my);
+        return;
+    }
 
     hero.targetEnemy = null;
     hero.targetX = mx;
