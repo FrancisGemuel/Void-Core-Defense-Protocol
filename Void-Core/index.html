@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tower Defense</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -49,6 +50,8 @@
                     ground only</div>
                 <div class="tg-row"><span style="color:#1D9E75">■</span> <strong>Drone</strong> — widest range, hits air
                     only</div>
+                <div class="tg-row"><span style="color:#d9b44a">■</span> <strong>Barracks</strong> — spawns 5 soldiers
+                    that fight inside a guarded range</div>
             </div>
         </div>
 
@@ -58,6 +61,8 @@
             <h2>About</h2>
             <p>A tower defense game built with vanilla JS and Canvas API. Place towers, control your hero, and survive
                 20 waves of increasingly tough enemies — bugs, dinos, blobs, flyers, and roamers.</p>
+            <p>Barracks towers deploy 5 low-damage soldiers. Soldiers patrol near the barracks, chase and shoot enemies
+                inside the barracks range, then return to their posts. Fallen soldiers respawn after 20 seconds.</p>
             <!-- YOUR NAME -->
             <p class="creator-name">
                 Developer: <strong>Francis Gemuel Buot</strong>
@@ -90,7 +95,7 @@
         </div>
         <!-- remodel -->
         <div id="bottom-bar">
-            <span style="color:#aaa;font-size:11px;">Towers:</span>
+            <span id="tower-label">Towers:</span>
 
             <button class="tower-btn selected" data-type="sniper">
                 <img src="assets/towers/sniper.png" class="icon">
@@ -116,14 +121,30 @@
                 <span class="cost">180g</span>
             </button>
 
-            <div style="margin-left:auto;display:flex;gap:6px;">
+            <button class="tower-btn" data-type="barracks">
+                <img src="assets/towers/drone.png" class="icon">
+                <span>Barracks</span>
+                <span class="cost">220g</span>
+            </button>
+
+            <div id="wave-actions">
                 <button class="tower-btn" id="start-btn">▶ Start</button>
                 <button class="tower-btn" id="reset-btn">↺ Reset</button>
             </div>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="js/home.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/enemies.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/render.js"></script>
+    <script src="js/effects.js"></script>
+    <script src="js/update.js"></script>
+    <script src="js/assets-audio.js"></script>
+    <script src="js/events.js"></script>
 </body>
 
 </html>
