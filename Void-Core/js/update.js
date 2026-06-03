@@ -141,12 +141,16 @@ function update() {
 
     // HERO UPDATE
     if (hero) {
-
-        // if (hero.dead) return;
-        // Movement
-        hero.hitCooldown = Math.max(0, hero.hitCooldown - 1);
-        hero.recoil = Math.max(0, (hero.recoil || 0) - 0.4);
-        if (hero.targetX !== null && hero.targetY !== null) {
+        // Pause hero logic while placing tower
+        if (towerPlacementDrag.active) {
+            // Still allow hit cooldown and recoil to decay
+            hero.hitCooldown = Math.max(0, hero.hitCooldown - 1);
+            hero.recoil = Math.max(0, (hero.recoil || 0) - 0.4);
+        } else {
+            // Movement
+            hero.hitCooldown = Math.max(0, hero.hitCooldown - 1);
+            hero.recoil = Math.max(0, (hero.recoil || 0) - 0.4);
+            if (hero.targetX !== null && hero.targetY !== null) {
             const dx = hero.targetX - hero.x;
             const dy = hero.targetY - hero.y;
             const dist = Math.hypot(dx, dy);
@@ -219,7 +223,9 @@ function update() {
 
             hero.targetEnemy = best;
         }
-        if (hero.hp <= 0 && !hero.dead) {
+    }
+
+    if (hero.hp <= 0 && !hero.dead) {
             hero.dead = true;
             hero.respawnTimer = 600; // 10 seconds
 
