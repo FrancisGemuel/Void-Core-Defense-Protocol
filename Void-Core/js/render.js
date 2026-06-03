@@ -561,3 +561,30 @@ function drawHero(h) {
     }
 }
 
+function drawTowerPlacementPreview() {
+    if (!towerPlacementDrag.active || !towerPlacementDrag.overCanvas) return;
+
+    const type = towerPlacementDrag.type;
+    const def = TOWER_DEFS[type];
+    const x = towerPlacementDrag.x;
+    const y = towerPlacementDrag.y;
+
+    // Draw range
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, def.range, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.stroke();
+    ctx.restore();
+
+    // Draw ghost tower
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    drawTower({ x, y, type, angle: 0, ...def });
+    ctx.restore();
+}
+

@@ -33,6 +33,14 @@ const PATH_WAYPOINTS_RATIO = [
 ];
 // objects
 let hoveredEnemy = null;
+let towerPlacementDrag = {
+    active: false,
+    type: null,
+    x: 0,
+    y: 0,
+    overCanvas: false,
+    pointerId: null
+};
 let decorations = [];
 let coins = 150, lives = 20, wave = 0, maxWaves = 20;
 let gameSpeed = 1;

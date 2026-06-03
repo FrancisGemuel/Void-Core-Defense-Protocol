@@ -658,4 +658,5 @@ function draw() {
 
         ctx.restore();
     }
+    drawTowerPlacementPreview();
 }
