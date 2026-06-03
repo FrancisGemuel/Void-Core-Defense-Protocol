@@ -1,5 +1,5 @@
-function placeTowerAt(mx, my) {
-    const def = TOWER_DEFS[selectedType];
+function placeTowerAt(mx, my, type = selectedType) {
+    const def = TOWER_DEFS[type];
 
     if (coins < def.cost) { showMsg('Not enough gold!', 900); return; }
 
@@ -19,7 +19,7 @@ function placeTowerAt(mx, my) {
     }
 
     coins -= def.cost;
-    towers.push({ x: mx, y: my, type: selectedType, cooldown: 0, ...def });
+    towers.push({ x: mx, y: my, type: type, cooldown: 0, ...def });
     updateUI();
 }
 
@@ -66,4 +66,34 @@ canvas.addEventListener('contextmenu', (e) => {
     hero.targetX = mx;
     hero.targetY = my;
     addMoveTrace(mx, my);
+});
+
+// Drag and Drop listeners for canvas
+canvas.addEventListener('dragover', (e) => {
+    e.preventDefault(); // allow drop
+
+    const rect = canvas.getBoundingClientRect();
+    towerPlacementDrag.x = e.clientX - rect.left;
+    towerPlacementDrag.y = e.clientY - rect.top;
+    towerPlacementDrag.overCanvas = true;
+});
+
+canvas.addEventListener('dragleave', () => {
+    towerPlacementDrag.overCanvas = false;
+});
+
+canvas.addEventListener('drop', (e) => {
+    e.preventDefault();
+
+    towerPlacementDrag.active = false;
+    towerPlacementDrag.overCanvas = false;
+
+    const type = e.dataTransfer.getData('towerType');
+    if (!type || gameOver || gameWon) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    placeTowerAt(mx, my, type);
 });

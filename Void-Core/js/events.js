@@ -2,6 +2,19 @@
     btn.addEventListener('click', () => {
         selectTower(btn.dataset.type);
     });
+
+    btn.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('towerType', btn.dataset.type);
+        towerPlacementDrag.active = true;
+        towerPlacementDrag.type = btn.dataset.type;
+        // Optional: select the tower when starting to drag
+        selectTower(btn.dataset.type);
+    });
+
+    btn.addEventListener('dragend', () => {
+        towerPlacementDrag.active = false;
+        towerPlacementDrag.overCanvas = false;
+    });
 });
 
 // document.getElementById('start-btn').addEventListener('click', startWave);
