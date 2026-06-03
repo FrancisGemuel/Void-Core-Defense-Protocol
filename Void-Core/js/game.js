@@ -38,6 +38,9 @@ function resetGame() {
     moveTraces = [];
     floatingTexts = [];
 
+    towerPlacementDrag.active = false;
+    towerPlacementDrag.overCanvas = false;
+
     // =========================
     // HERO RESET (IMPORTANT FIX)
     // =========================
@@ -65,8 +68,21 @@ function resetGame() {
 }
 //SHIFT-CLICK FOR PLACING AFTER SELECT
 function selectTower(type) {
+    // If the same type is already selected and we are in placement mode, toggle it off
+    if (selectedType === type && towerPlacementDrag.active) {
+        towerPlacementDrag.active = false;
+        document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
+        return;
+    }
+
     selectedType = type;
     document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
-    document.querySelector(`[data-type="${type}"]`).classList.add('selected');
+    const btn = document.querySelector(`[data-type="${type}"]`);
+    if (btn) btn.classList.add('selected');
+
+    // Activate placement mode for click-to-place
+    towerPlacementDrag.active = true;
+    towerPlacementDrag.type = type;
+    towerPlacementDrag.overCanvas = false; // Will be set to true on mousemove over canvas
 }
 window.selectTower = selectTower;

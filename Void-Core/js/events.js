@@ -57,6 +57,12 @@ canvas.addEventListener('mousemove', (e) => {
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
 
+    if (towerPlacementDrag.active) {
+        towerPlacementDrag.x = mx;
+        towerPlacementDrag.y = my;
+        towerPlacementDrag.overCanvas = true;
+    }
+
     hoveredEnemy = null;
 
     for (let en of enemies) {
